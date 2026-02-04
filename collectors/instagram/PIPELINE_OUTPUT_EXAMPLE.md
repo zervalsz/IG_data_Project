@@ -201,7 +201,7 @@ python3 pipeline.py --user_id user3
 
 ✅ **user_snapshots**: Raw user data grouped by username  
 ✅ **user_profiles**: AI analysis of user style, content, audience, and brand fit  
-⚠️ **user_embeddings**: Not stored (FlagEmbedding requires compatible transformers version)
+ℹ️ **user_embeddings**: May be stored if an embedding backend is available. The pipeline prefers `FlagEmbedding`; if unavailable it will attempt a local `sentence-transformers` fallback.
 
 ---
 

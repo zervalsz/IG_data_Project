@@ -59,7 +59,7 @@ user_snapshots (MongoDB)
 ChatGPT/Gemini API
     ↓ [analysis with retry logic on 429 errors]
 user_profiles (MongoDB) - Upserted with platform='instagram' check
-user_embeddings (MongoDB) - Optional, gracefully skipped if FlagEmbedding unavailable
+user_embeddings (MongoDB) - Optional; generated using `FlagEmbedding` when available, otherwise a local `sentence-transformers` fallback will be used if installed (see `EMBEDDING_MODEL` env var)
     ↓ [FastAPI backend + Frontend]
 Display in Frontend (Optional)
 ```
