@@ -10,7 +10,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # 导入新的路由（使用Service层和Database层）
-from api.routers import style_router, creator_router
+from api.routers import style_router, creator_router, instagram_router
 
 app = FastAPI(
     title="XHS Data Analysis API",
@@ -30,6 +30,7 @@ app.add_middleware(
 # 注册路由（新架构）
 app.include_router(style_router, tags=["风格生成"])
 app.include_router(creator_router, tags=["创作者数据"])
+app.include_router(instagram_router, tags=["instagram"])
 
 
 @app.get("/")

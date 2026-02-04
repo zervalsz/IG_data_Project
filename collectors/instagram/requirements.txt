@@ -1,0 +1,31 @@
+# Core dependencies
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# AI & Embeddings
+torch
+torchvision
+torchaudio
+transformers
+sentence-transformers
+FlagEmbedding
+openai
+
+# MongoDB
+pymongo
+
+# API & Network
+requests
+httpx
+aiohttp
+python-dotenv
+
+# Data processing
+numpy
+pandas
+
+# Utilities
+tqdm
+Pillow
+PyYAML
+python-dateutil
+pytz
