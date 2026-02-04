@@ -211,18 +211,26 @@ def process_all_instagram_users(limit: int = None):
     embedding_model = None
     if FLAG_EMBEDDING_AVAILABLE:
         try:
-            print("\n📦 Loading embedding model...")
+            print("\n📦 Loading FlagEmbedding model...")
             embedding_model = FlagModel(
                 os.environ.get('EMBEDDING_MODEL', 'BAAI/bge-small-zh-v1.5'),
                 query_instruction_for_retrieval="",
                 use_fp16=True
             )
-            print("✅ Embedding model loaded")
+            print("✅ FlagEmbedding model loaded")
         except Exception as e:
             print("⚠️  Failed to load FlagModel, embeddings will be skipped:\n", e)
             embedding_model = None
     else:
-        print("⚠️  FlagEmbedding not available in this environment — embeddings will be skipped")
+        # Try a lightweight local fallback using sentence-transformers if available
+        try:
+            from .embedding_backend import SentenceTransformersWrapper
+            print("\n📦 Loading local embedding model (sentence-transformers)...")
+            embedding_model = SentenceTransformersWrapper(os.environ.get('EMBEDDING_MODEL', 'all-MiniLM-L6-v2'))
+            print("✅ Local embedding model loaded")
+        except Exception as e:
+            print("⚠️  Local sentence-transformers not available; embeddings will be skipped:", e)
+            embedding_model = None
     
     # Get all user IDs from snapshots
     snapshot_repo = UserSnapshotRepository()
