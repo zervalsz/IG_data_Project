@@ -26,6 +26,13 @@ def load_json_file(path: str):
 
 def upsert_embedding(doc: dict, collection_name: str = 'user_embedding'):
     # Import get_database lazily so environment variables can be loaded first
+    # Ensure project root is on sys.path so `backend` package is importable when running from collectors/instagram
+    import sys
+    from pathlib import Path
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
     from backend.database.connection import get_database
     db = get_database()
     col = db[collection_name]
