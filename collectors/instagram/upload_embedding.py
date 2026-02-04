@@ -11,9 +11,12 @@ import os
 import json
 import argparse
 from datetime import datetime
+from pathlib import Path
+from dotenv import load_dotenv
 
-# Import get_database which will read MONGO_URI from env/.env
-from backend.database.connection import get_database
+# Note: we import get_database lazily inside upsert_embedding() so that
+# we can load a local .env (collectors/instagram/.env) before the backend
+# connection module evaluates environment variables.
 
 
 def load_json_file(path: str):
@@ -22,6 +25,8 @@ def load_json_file(path: str):
 
 
 def upsert_embedding(doc: dict, collection_name: str = 'user_embedding'):
+    # Import get_database lazily so environment variables can be loaded first
+    from backend.database.connection import get_database
     db = get_database()
     col = db[collection_name]
 
@@ -56,6 +61,12 @@ def main():
     parser.add_argument('--file', '-f', required=True, help='Path to local embedding JSON file')
     parser.add_argument('--collection', '-c', default='user_embedding', help='MongoDB collection name to upsert into')
     args = parser.parse_args()
+
+    # Load local .env in collectors/instagram if present (so users can store MONGO_URI there)
+    local_env = Path(__file__).resolve().parent / '.env'
+    if local_env.exists():
+        load_dotenv(local_env)
+        print(f"Loaded environment variables from {local_env}")
 
     # Quick env check
     if not os.environ.get('MONGO_URI'):
