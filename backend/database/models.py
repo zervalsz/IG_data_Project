@@ -79,6 +79,29 @@ class UserEmbedding(BaseModel):
 
 
 # =====================================================
+# 3.5 Post Embedding Models
+# =====================================================
+
+class PostEmbedding(BaseModel):
+    """帖子多模态embedding"""
+    post_id: str
+    user_id: str
+    username: str
+    platform: PlatformType
+    embedding: List[float]  # 多模态向量
+    caption: str = ""
+    objects: List[str] = Field(default_factory=list)
+    ocr_text: List[str] = Field(default_factory=list)
+    like_count: int = 0
+    comment_count: int = 0
+    play_count: Optional[int] = None
+    media_urls: List[str] = Field(default_factory=list)
+    model: str = "all-MiniLM-L6-v2"
+    dimension: int = 384
+    created_at: datetime = Field(default_factory=datetime.now)
+
+
+# =====================================================
 # 4. Creator Network Models
 # =====================================================
 

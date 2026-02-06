@@ -389,6 +389,81 @@ class StylePromptRepository(BaseRepository):
 
 
 # =====================================================
+# 5.5 Post Embedding Repository
+# =====================================================
+
+class PostEmbeddingRepository(BaseRepository):
+    """帖子embedding仓库"""
+    
+    def __init__(self):
+        super().__init__("post_embeddings")
+    
+    def get_by_post_id(self, post_id: str, platform: str = "instagram") -> Optional[Dict[str, Any]]:
+        """
+        根据post_id获取帖子embedding
+        
+        Args:
+            post_id: 帖子ID
+            platform: 平台类型
+            
+        Returns:
+            embedding数据 or None
+        """
+        return self.find_one({"post_id": str(post_id), "platform": platform})
+    
+    def get_by_user_id(self, user_id: str, platform: str = "instagram", limit: int = 0) -> List[Dict[str, Any]]:
+        """
+        根据user_id获取用户所有帖子的embeddings
+        
+        Args:
+            user_id: 用户ID
+            platform: 平台类型
+            limit: 返回数量限制，0表示无限制
+            
+        Returns:
+            embedding列表
+        """
+        return self.find_many({"user_id": user_id, "platform": platform}, limit=limit)
+    
+    def create_embedding(self, embedding_data: Dict[str, Any]) -> str:
+        """
+        创建帖子embedding
+        
+        Args:
+            embedding_data: embedding数据
+            
+        Returns:
+            插入的文档ID
+        """
+        embedding_data['created_at'] = datetime.now()
+        return self.insert_one(embedding_data)
+    
+    def upsert_embedding(self, post_id: str, platform: str, embedding_data: Dict[str, Any]) -> bool:
+        """
+        创建或更新帖子embedding（防止重复）
+        
+        Args:
+            post_id: 帖子ID
+            platform: 平台类型
+            embedding_data: embedding数据
+            
+        Returns:
+            是否成功
+        """
+        from pymongo import UpdateOne
+        embedding_data['updated_at'] = datetime.now()
+        if 'created_at' not in embedding_data:
+            embedding_data['created_at'] = datetime.now()
+        
+        result = self.collection.update_one(
+            {"post_id": str(post_id), "platform": platform},
+            {"$set": embedding_data},
+            upsert=True
+        )
+        return result.acknowledged
+
+
+# =====================================================
 # 6. Platform Config Repository
 # =====================================================
 

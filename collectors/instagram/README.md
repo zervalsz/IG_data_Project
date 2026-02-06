@@ -1,79 +1,113 @@
 # Instagram Data Analysis Pipeline
 
-A robust data pipeline for analyzing Instagram user profiles using ChatGPT or Gemini, with automatic retry logic for API rate limits, smart batch processing, and duplicate prevention. Designed to work with your raw MongoDB data without requiring data collection.
+A complete end-to-end data pipeline for Instagram user analysis powered by AI. Fetches raw data from TikHub, generates user profiles with ChatGPT/Gemini, creates multimodal embeddings (user + post level), and stores everything in MongoDB.
 
 ## 🎯 Overview
 
-This pipeline is designed to:
-1. **Adapt** raw Instagram API responses into user snapshots (via `adapter.py`)
-2. **Analyze** user profiles using ChatGPT or Gemini API with automatic retries on rate limits
-3. **Store** analysis results back to MongoDB with duplicate prevention
-4. **Batch process** multiple users with intelligent detection of existing profiles
-5. **(Optional)** Display results in the frontend
+This pipeline provides a full solution for Instagram user analysis:
+
+1. **Fetch** - Raw Instagram data via TikHub API (`fetcher.py`)
+2. **Adapt** - Transform raw API responses into snapshots (`adapter.py`)
+3. **Analyze** - Generate user profiles with ChatGPT/Gemini (`analyzer.py`) 
+4. **Embed (User)** - Create 512-dim user style embeddings with FlagEmbedding (`pipeline.py`)
+5. **Embed (Posts)** - Extract 384-dim multimodal post embeddings with YOLO + OCR + text (`extract_post_multimodal.py`)
+6. **Store** - Save all data to MongoDB with duplicate prevention
+7. **(Optional)** Display results in Next.js frontend
 
 **Key Features:**
-- ✅ **Skip data collection** - Use your own raw Instagram data (filename pattern: `xxx(username)_... .json`)
-- ✅ **Rate limit resilience** - 5 retries with exponential backoff (1s, 2s, 4s, 8s, 16s) for OpenAI 429 errors
-- ✅ **Flexible AI provider** - Choose between OpenAI ChatGPT or Google Gemini
-- ✅ **Smart batch processing** - `batch_processor.py` auto-detects and skips users with existing profiles
-- ✅ **Duplicate prevention** - Profiles are updated, not duplicated on re-runs (upsert with platform-specific checks)
-- ✅ **Adapter pattern** - Transforms raw API responses into pipeline-compatible snapshots
-- ✅ **Compatible with frontend** - Same MongoDB structure as original pipeline
+- ✅ **Complete Pipeline** - From TikHub API to MongoDB to Frontend
+- ✅ **Multimodal Embeddings** - User-level (text) + Post-level (vision + text + engagement)
+- ✅ **AI Profile Analysis** - GPT-4o-mini or Gemini with automatic retry on rate limits
+- ✅ **Smart Visual Processing** - YOLO object detection + EasyOCR text extraction
+- ✅ **Production Ready** - Upsert logic, retry mechanisms, graceful error handling
+- ✅ **Local-First Mode** - Option to save fetched data locally before MongoDB upload
+- ✅ **Flexible Providers** - OpenAI or Google Gemini for analysis
 
 ---
 
 ## 📋 Prerequisites
 
 - Python 3.10+
-- MongoDB instance with `ig_raw` database
-- Raw Instagram data in `raw_api_responses` collection
+- MongoDB instance (local or cloud)
+- **TikHub API Token** (for data fetching) - Get from [TikHub.io](https://tikhub.io)
 - One of:
-  - **OpenAI API key** (for ChatGPT - gpt-4o-mini recommended)
-  - **Google Gemini API key** (for Gemini - gemini-2.0-flash)
-- If you want to fetch raw data via TikHub:
-  - **TIKHUB_API_TOKEN** environment variable (required)
-  - **TIKHUB_BASE_URL** (optional, defaults to https://api.tikhub.io)
-- Raw data filenames should follow pattern: `xxx(username)_... .json` for automatic username extraction
+  - **OpenAI API key** (recommended: gpt-4o-mini)
+  - **Google Gemini API key** (gemini-2.0-flash)
+- ~3GB disk space (2.3GB for venv + models, rest for temp files)
 
 ---
 
 ## 📁 Architecture
 
-### Components
+### Components Overview
 
 | File | Purpose | Status |
 |------|---------|--------|
-| `adapter.py` | Converts raw_api_responses → user_snapshots, extracts username from filenames | ✅ Fixed (no more duplicate posts) |
-| `analyzer.py` | Analyzes profiles with ChatGPT/Gemini, includes retry logic for 429 errors | ✅ Enhanced (5 retries + exponential backoff) |
-| `pipeline.py` | Orchestrator: reads snapshots → calls analyzer → saves with upsert | ✅ Enhanced (platform-specific upsert, duplicate prevention) |
-| `batch_processor.py` | **NEW** - Processes multiple users, auto-detects existing profiles | ✅ Fully tested |
-| `requirements.txt` | Dependencies | ✅ Complete |
+| **fetcher.py** | Fetches raw data from TikHub API (user bio, posts, reels) | ✅ Production |
+| **adapter.py** | Converts raw_api_responses → user_snapshots | ✅ Fixed |
+| **analyzer.py** | AI profile analysis with ChatGPT/Gemini + retry logic | ✅ Enhanced |
+| **pipeline.py** | Main orchestrator: fetch → analyze → embed → store | ✅ Complete |
+| **extract_post_multimodal.py** | Extract post embeddings (YOLO + OCR + text) | ✅ New |
+| **batch_processor.py** | Batch process multiple users with skip logic | ✅ Tested |
 
-### Data Flow
+### MongoDB Collections
+
+| Collection | Purpose | Key Fields |
+|------------|---------|------------|
+| **raw_api_responses** | Raw TikHub API responses | `user_id`, `endpoint`, `data`, `filename` |
+| **user_snapshots** | Normalized user + posts structure | `user_id`, `username`, `user_info`, `posts[]` |
+| **user_profiles** | AI-generated profile analysis | `user_id`, `username`, `profile_data.user_style`, `topics` |
+| **user_embeddings** | 512-dim user style embeddings | `user_id`, `user_style_embedding`, `model`, `dimension` |
+| **post_embeddings** | 384-dim multimodal post embeddings | `post_id`, `user_id`, `embedding`, `caption`, `objects`, `ocr_text` |
+
+### Complete Data Flow
 
 ```
-raw_api_responses (MongoDB)
-    ↓ [adapter.py extracts username from filenames]
-user_snapshots (MongoDB)
-    ↓ [pipeline.py reads + calls analyzer.py]
-ChatGPT/Gemini API
-    ↓ [analysis with retry logic on 429 errors]
-user_profiles (MongoDB) - Upserted with platform='instagram' check
-user_embeddings (MongoDB) - Optional; generated using `FlagEmbedding` when available, otherwise a local `sentence-transformers` fallback will be used if installed (see `EMBEDDING_MODEL` env var)
-    ↓ [FastAPI backend + Frontend]
-Display in Frontend (Optional)
+┌─────────────────────────────────────────────────────────────┐
+│ 1. DATA FETCHING (fetcher.py)                              │
+│    TikHub API → raw_api_responses (MongoDB)                │
+└──────────────────────┬──────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 2. DATA ADAPTATION (adapter.py)                            │
+│    raw_api_responses → user_snapshots (MongoDB)            │
+│    • Extracts username from filenames                      │
+│    • Normalizes post structure                             │
+└──────────────────────┬──────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 3. PROFILE ANALYSIS (pipeline.py → analyzer.py)            │
+│    user_snapshots → ChatGPT/Gemini → user_profiles         │
+│    • 5 content topics                                      │
+│    • User style analysis                                   │
+│    • Retry logic for rate limits                           │
+└──────────────────────┬──────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 4. USER EMBEDDING (pipeline.py + FlagEmbedding)            │
+│    profile_data → BAAI/bge-small-zh-v1.5 → user_embeddings │
+│    • 512 dimensions                                        │
+│    • Text-based embedding from user style                  │
+└──────────────────────┬──────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 5. POST EMBEDDINGS (extract_post_multimodal.py)            │
+│    posts → YOLO + OCR + Transformer → post_embeddings     │
+│    • 384 dimensions (all-MiniLM-L6-v2)                     │
+│    • Object detection (YOLO)                               │
+│    • Text extraction (EasyOCR)                             │
+│    • Caption embedding                                     │
+└──────────────────────┬──────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 6. FRONTEND (Optional - Next.js + FastAPI)                 │
+│    MongoDB → API → React UI                                │
+│    • Search by style                                       │
+│    • Vector similarity                                     │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
-
-## 📋 Prerequisites
-
-- Python 3.8+
-- MongoDB instance with your Instagram data
-- One of:
-  - OpenAI API key (for ChatGPT)
-  - Google Gemini API key
-- ~2GB disk space for embedding model
 
 ## 🚀 Setup Instructions
 
@@ -81,386 +115,289 @@ Display in Frontend (Optional)
 
 ```bash
 cd collectors/instagram
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 pip install -r requirements.txt
 ```
 
+**Note:** The system will automatically install compatible versions:
+- `transformers<5.0.0` (for FlagEmbedding compatibility)
+- `FlagEmbedding==1.3.5` (for user embeddings)
+- `sentence-transformers` (for post embeddings)
+- `ultralytics` (YOLO for object detection)
+- `easyocr` (for text extraction)
+
 ### 2. Configure Environment Variables
 
-Create or update `.env` file in `collectors/instagram/`:
+Create `.env` file in `collectors/instagram/`:
 
-**For ChatGPT (OpenAI):**
 ```env
+# MongoDB
 MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
 DATABASE_NAME=ig_raw
-RAW_COLLECTION=raw_api_responses
+
+# TikHub API (for data fetching)
+TIKHUB_API_TOKEN=your-tikhub-token
+TIKHUB_BASE_URL=https://api.tikhub.io  # Optional, this is default
+
+# AI Provider (choose one)
+# Option 1: OpenAI
 OPENAI_API_KEY=sk-your-openai-api-key
 CHAT_MODEL=gpt-4o-mini
 AI_PROVIDER=openai
+
+# Option 2: Google Gemini
+# GEMINI_API_KEY=your-gemini-api-key
+# GEMINI_MODEL=gemini-2.0-flash
+# AI_PROVIDER=gemini
+
+# Embedding Models (optional - uses defaults if not specified)
+EMBEDDING_MODEL=BAAI/bge-small-zh-v1.5  # For user embeddings (512-dim)
+# POST_EMBEDDING_MODEL=all-MiniLM-L6-v2  # For post embeddings (384-dim)
 ```
 
-**For Gemini (Google):**
-```env
-MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
-DATABASE_NAME=ig_raw
-RAW_COLLECTION=raw_api_responses
-GEMINI_API_KEY=your-gemini-api-key
-GEMINI_MODEL=gemini-2.0-flash
-AI_PROVIDER=gemini
-```
+### 3. Download Required Models
 
-### 3. Verify Your MongoDB Data
-
-Your data should be in `raw_api_responses` collection:
-
-```bash
-# Check collection exists and count documents
-python3 -c "
-from pymongo import MongoClient
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-client = MongoClient(os.getenv('MONGO_URI'))
-db = client[os.getenv('DATABASE_NAME', 'ig_raw')]
-count = db['raw_api_responses'].count_documents({})
-print(f'Documents in raw_api_responses: {count}')
-
-# Show sample document structure
-sample = db['raw_api_responses'].find_one()
-print(f'Sample doc keys: {list(sample.keys()) if sample else \"Empty\"}')
-"
-```
+The pipeline will auto-download models on first run:
+- **BAAI/bge-small-zh-v1.5** (96MB) - User embeddings
+- **all-MiniLM-L6-v2** (88MB) - Post embeddings  
+- **yolov8n.pt** (6MB) - Object detection
 
 ---
 
 ## 🔧 Usage
 
-### Option 1: Process All Users (Smart Batch Processing - Recommended)
+### Complete Pipeline (Recommended)
 
-The `batch_processor.py` script automatically:
-- Detects all users with raw data in `raw_api_responses`
-- Skips users who already have profiles in `user_profiles`
-- Only processes new users
+Process a user from TikHub API → MongoDB → Embeddings:
 
 ```bash
-# Default: process only new users (skips existing)
+# Full pipeline: fetch + analyze + user embedding + post embeddings
+python3 pipeline.py --fetch_username mondaypunday
+
+# This automatically:
+# 1. Fetches raw data from TikHub
+# 2. Creates snapshot
+# 3. Analyzes profile with ChatGPT/Gemini
+# 4. Generates 512-dim user embedding
+# 5. Stores everything in MongoDB
+```
+
+Then extract post embeddings:
+
+```bash
+# Extract multimodal embeddings for 10 posts
+python3 extract_post_multimodal.py --username mondaypunday --count 10
+```
+
+**Expected Output:**
+```
+📦 Loading embedding model: BAAI/bge-small-zh-v1.5
+✅ Embedding model loaded
+
+🎯 Processing Instagram user: mondaypunday
+✅ Found user: mondaypunday (25 posts)
+
+🤖 Analyzing user profile...
+✅ Generated embedding (dimension: 512)
+✅ Analysis complete
+   - Topics: 5
+   - Embedding: 512 dimensions
+
+💾 Step 3: Saving to MongoDB...
+✅ Updated user_profiles
+✅ Created user_embeddings
+
+🎬 Extracting multimodal embeddings for: mondaypunday
+✅ Found 10 posts with media
+📦 Loading models...
+✅ Models loaded
+
+📸 Processing post 1/10
+   - YOLO detected: 1 person
+   - Caption: "Dallas 12/22-23..."
+   - Embedding: 384 dimensions
+✅ Saved to MongoDB: post_embeddings
+
+... [9 more posts]
+
+✅ Processing complete! (10/10 posts, 100% success)
+```
+
+### Batch Processing
+
+Process multiple users efficiently:
+
+```bash
+# Process only new users (skip existing)
 python3 batch_processor.py
 
-# Reprocess all users (overwrite existing profiles)
+# Force reprocess all users
 python3 batch_processor.py --force-all
 
-# Process specific users
-python3 batch_processor.py --force username1 username2 username3
+# Force reprocess specific users
+python3 batch_processor.py --force user1 user2 user3
+```
+
+### Paged Fetching with Local Storage
+
+For large accounts or reproducibility, fetch data locally first:
+
+```bash
+# Fetch 3 pages of posts, 2 pages of reels, store locally first
+python3 pipeline.py --fetch_username_paged mondaypunday \
+  --post_pages 3 \
+  --reel_pages 2 \
+  --page_count 12 \
+  --store_local_first \
+  --local_file_limit 5
+
+# Files saved to: outputs/raw/instagram/mondaypunday/
+# Then uploaded to MongoDB after all pages fetched
+```
+
+### Diagnostics
+
+Check your environment configuration:
+
+```bash
+python3 pipeline.py --diagnose
 ```
 
 **Output:**
 ```
-🔍 Scanning for Instagram users with raw data...
-✅ Found 6 users with raw data
-📊 Checking existing profiles...
-   - doobydobap: ✅ Already has profile (skip)
-   - herfirst100k: ✅ Already has profile (skip)
-   - jackinvestment: ❌ No profile (will process)
-   - madfitig: ❌ No profile (will process)
-   - rainn: ❌ No profile (will process)
-   - theholisticpsychologist: ❌ No profile (will process)
-
-🚀 Processing 4 new users...
-[1/4] Processing jackinvestment...
-✅ Created user_profiles
-✅ Created user_embeddings (0 dimensions - FlagEmbedding unavailable)
-
-... [progress for each user]
-
-✅ All users processed successfully!
-Processing summary:
-  - New profiles: 4
-  - Updated profiles: 0
-  - Skipped (existing): 2
-  - Failed: 0
-```
-
-### Option 2: Process Single User
-
-```bash
-python3 pipeline.py --user_id username_or_user_id
-```
-
-Example with detailed output:
-```
-============================================================
-🎯 Processing Instagram user: herfirst100k
-============================================================
-
-📥 Step 1: Reading data from MongoDB...
-✅ Found user: herfirst100k
-   - Posts: 49
-   - Profile created: 2024-01-15
-
-🤖 Step 2: Analyzing user profile...
-✅ Analysis complete
-   - Topics identified: 5
-   - Embedding: 0 dimensions (FlagEmbedding unavailable - gracefully skipped)
-
-💾 Step 3: Saving to MongoDB...
-✅ Updated user_profiles (duplicate prevention active)
-
-✨ User herfirst100k analysis complete!
-```
-
-### Option: Fetch + Process a Username
-
-If you have valid TikHub credentials in your environment, you can fetch raw data and process it in one command:
-
-```bash
-# Fetch raw data for `doobydobap`, upsert snapshot, then run analysis & save profile
-python3 pipeline.py --fetch_username doobydobap
-```
-
-This runs:
-1. `fetch_user_info` (and `fetch_user_posts`/`fetch_user_reels` if available)
-2. Upserts a `user_snapshots` document for that username
-3. Runs the analyzer and saves `user_profiles` / `user_embeddings`
-
-
-📥 Step 1: Reading data from MongoDB...
-✅ Found user: herfirst100k
-   - Posts: 49
-   - Profile created: 2024-01-15
-
-🤖 Step 2: Analyzing user profile...
-✅ Analysis complete
-   - Topics identified: 5
-   - Embedding: 0 dimensions (FlagEmbedding unavailable - gracefully skipped)
-
-💾 Step 3: Saving to MongoDB...
-✅ Updated user_profiles (duplicate prevention active)
-
-✨ User herfirst100k analysis complete!
-```
-
-### Option 3: Process Multiple Users
-
-```bash
-# Reprocess all users (overwrite)
-python3 pipeline.py --all
-
-# Process first 10 users
-python3 pipeline.py --all --limit 10
+🔍 Running diagnostics...
+ - MONGO_URI: True
+ - TIKHUB_BASE: True
+ - TIKHUB_TOKEN: True
+ - MONGO_CONNECT: True
+ - FLAG_EMBEDDING_AVAILABLE: True
 ```
 
 ---
 
-## ✨ Verified System Status
+## 📊 MongoDB Data Structures
 
-**Currently Processed Users (6 total):**
-
-| Username | Posts | Topics | Status |
-|----------|-------|--------|--------|
-| doobydobap | 49 | Korean food, cooking, lifestyle | ✅ Profile created |
-| herfirst100k | 49 | Financial empowerment, women's finance, investing, career, business | ✅ Profile created |
-| jackinvestment | 25 | Investment, personal growth, financial tips | ✅ Profile created |
-| madfitig | 49 | Fitness, health, training, wellness, lifestyle | ✅ Profile created |
-| rainn | 37 | Sexual assault awareness, prevention, support, community, empowerment | ✅ Profile created |
-| theholisticpsychologist | 49 | Mental health, psychology, wellness, personal development, spirituality | ✅ Profile created |
-
-**Key Improvements Made:**
-- ✅ Fixed duplicate post extraction (was extracting 97, now correctly shows 49)
-- ✅ Implemented 5-retry exponential backoff for OpenAI rate limits
-- ✅ Implemented platform-specific upsert to prevent duplicate profiles
-- ✅ Created batch processor for intelligent multi-user processing
-- ✅ All 6 users analyzed without duplicates on re-runs
-
----
-
-## � Recent changes (what I implemented)
-These are the recent reliability and usability improvements made to the TikHub-based Instagram collector and how to use them.
-
-### ✅ Reliability & error handling
-- **Retry + backoff for HTTP calls**: Added an internal `_http_get(...)` helper that retries transient errors (network failures, 429, and 5xx) with exponential backoff to reduce flaky failures. 🚀
-- **Clearer error persistence**: When API calls fail (client or server errors), the raw error body and status are now saved into the DB with endpoints like `posts_list_error` and `reels_list_error` so you can triage failures later. 🧾
-- **Improved error messages**: Fetch functions raise clearer `RuntimeError` that include HTTP status and response body for faster debugging. 🔎
-
-### 📁 Local-first & reproducibility
-- **Local-first mode for paged fetches**: `fetch_and_store_paged(..., store_local_first=True)` (or CLI flag `--store_local_first`) writes all fetched pages (user_info, posts pages, reels pages) to `outputs/raw/instagram/<username>/...` first, then uploads them to MongoDB in a second step.
-  - Use `--local_file_limit <n>` (default 5) to stop after collecting n files if you only want a small sample.
-  - This ensures you always have reproducible local copies before any DB activity. 💾
-- **Single-fetch local copies**: Single-page fetch calls (e.g., `fetch_user_posts` / `fetch_user_reels`) now also write a local JSON file even if `save=False`, so you get a local snapshot for every fetch. 📂
-
-### 🔒 Pagination safety
-- **Repeated cursor detection**: Pagination stops if the next cursor repeats (prevents infinite loops when the API returns the same cursor). ⚠️
-- **Candidate cursor heuristics**: When no explicit next cursor is present, heuristics try to find a candidate `max_id` or `end_cursor` from last items so you can still fetch more pages in many cases. 🧠
-
-### 🧰 CLI & diagnostics
-- **New CLI flags:**
-  - `--store_local_first` (paired with `--local_file_limit`) for `--fetch_username_paged`
-  - `--diagnose` to run environment connectivity and credential checks (checks `MONGO_URI`, `TIKHUB_API_TOKEN`, DB connectivity, and FlagEmbedding availability)
-- **Usage example (collect locally then upload):**
-
-```bash
-cd collectors/instagram
-python3 pipeline.py --fetch_username_paged adventuresofnik --post_pages 3 --reel_pages 2 --page_count 12 --store_local_first --local_file_limit 5
-```
-
-This will:
-1. Fetch user_info and up to the requested pages, writing each page to `outputs/raw/instagram/adventuresofnik/`.
-2. After collection completes, upload local files to `raw_api_responses` and upsert snapshot.
-
-### ✅ Tests & dev ergonomics
-- **Tests added**: Added `tests/test_fetcher_local_and_retry.py` and `tests/test_store_local_first.py` covering local writes, retry behavior, repeated-cursor stop, and the local-first upload flow.
-- **Tests support in minimal envs**: tests include a `conftest.py` that ensures the project root is importable and core imports (`dotenv`, `pymongo`) are handled gracefully in test environments.
-
----
-
-## �📊 Output Data Structure
-
-### 1. `user_profiles` Collection
+### 1. user_profiles Collection
 
 ```json
 {
-  "_id": ObjectId("..."),
+  "_id": "ObjectId(...)",
   "platform": "instagram",
-  "user_id": "123456789",
-  "username": "example_user",
+  "user_id": "mondaypunday",
+  "username": "mondaypunday",
   "profile_data": {
     "user_style": {
-      "persona": "Finance-focused educator empowering women to take control of their financial future through accessible, actionable advice",
-      "tone": "Motivational, educational, empowering, relatable, authentic",
-      "interests": ["financial literacy", "women's empowerment", "investing", "career growth"]
+      "persona": "Stand-up comedian sharing observational humor about daily life...",
+      "tone": "Humorous, relatable, conversational, authentic",
+      "interests": ["comedy", "stand-up", "social commentary", "storytelling"]
     },
-    "content_topics": ["financial education", "women's investing", "career development", "wealth building", "financial independence"],
+    "content_topics": [
+      {"topic": "Stand-up Comedy", "percentage": 40},
+      {"topic": "Humor and Satire", "percentage": 25},
+      {"topic": "Social Commentary", "percentage": 20},
+      {"topic": "Cultural Observations", "percentage": 10},
+      {"topic": "Life Experiences", "percentage": 5}
+    ],
     "posting_pattern": {
-      "frequency": "Daily to every other day",
-      "best_time_to_post": "Morning (7-10 AM) or evening (6-9 PM)",
-      "content_mix": ["educational posts", "personal stories", "financial tips", "carousel posts"]
+      "frequency": "Weekly to bi-weekly",
+      "best_time_to_post": "Evening (7-10 PM)",
+      "content_mix": ["video clips", "tour dates", "promotional content"]
     },
-    "audience_type": ["Young women", "Career professionals", "Aspiring investors", "Financial learners"],
-    "engagement_style": "Interactive and educational - responds to comments, asks questions, provides actionable advice",
-    "brand_fit": ["Financial services", "Career development platforms", "Investment apps", "Educational tech"],
-    "user_style_embedding": []  // 0 dimensions if FlagEmbedding unavailable
+    "audience_type": ["Comedy fans", "Young adults", "Social observers"],
+    "engagement_style": "Interactive - responds to comments, promotional",
+    "brand_fit": ["Comedy clubs", "Entertainment platforms", "Lifestyle brands"]
   },
-  "created_at": "2024-01-15T10:30:00Z",
-  "updated_at": "2024-01-15T10:35:00Z"
+  "created_at": "2026-02-06T10:30:00Z",
+  "updated_at": "2026-02-06T10:35:00Z"
 }
 ```
 
-### 2. `user_embeddings` Collection (Optional)
+### 2. user_embeddings Collection
 
 ```json
 {
-  "_id": ObjectId("..."),
+  "_id": "ObjectId(...)",
   "platform": "instagram",
-  "user_id": "example_user",
-  "user_style_embedding": [],
+  "user_id": "mondaypunday",
+  "user_style_embedding": [0.0234, -0.1245, 0.0567, ...],  // 512 floats
   "model": "BAAI/bge-small-zh-v1.5",
-  "dimension": 0,
-  "created_at": "2024-01-15T10:35:00Z"
+  "dimension": 512,
+  "created_at": "2026-02-06T10:35:00Z",
+  "updated_at": "2026-02-06T10:35:00Z"
 }
 ```
 
----
+### 3. post_embeddings Collection
 
-## 🎨 Analysis Output Fields
-
-The analyzer provides comprehensive user profile data:
-
-| Field | Description |
-|-------|-------------|
-| `user_style.persona` | 2-3 sentence description of the user's identity |
-| `user_style.tone` | Words describing their posting/writing style |
-| `user_style.interests` | Key interest areas and topics |
-| `content_topics` | Main content categories |
-| `posting_pattern` | Frequency, best times, content mix |
-| `audience_type` | Demographics of followers |
-| `engagement_style` | How they interact with audience |
-| `brand_fit` | Suitable brand partnerships |
-| `user_style_embedding` | 384-dim vector for similarity search |
-
----
-
-## 🔄 Key Implementation Details
-
-### Adapter Pattern (adapter.py)
-
-**Transforms raw Instagram API responses into snapshots:**
-
-```python
-# Input: raw_api_responses documents
-# Process:
-# 1. Extract username from filename pattern: xxx(username)_... .json
-# 2. Group all raw documents by user_id
-# 3. Extract posts from raw.data.items (fixed: no longer duplicates)
-
-# Output: user_snapshots collection with structure:
+```json
 {
+  "_id": "ObjectId(...)",
   "platform": "instagram",
-  "user_id": "123456789",
-  "username": "extracted_from_filename",
-  "user_info": {...},
-  "posts": [...49 posts per user...]
+  "post_id": "2982334644151768448",
+  "user_id": "mondaypunday",
+  "username": "mondaypunday",
+  "embedding": [-0.0591, -0.0529, -0.0117, ...],  // 384 floats
+  "caption": "Dallas 12/22-23\nDetroit 12/29-31...",
+  "objects": ["person"],  // YOLO detections
+  "ocr_text": [],  // EasyOCR extractions
+  "like_count": 216879,
+  "comment_count": 599,
+  "play_count": 2485055,
+  "media_urls": ["https://instagram.fmil1-1.fna.fbcdn.net/..."],
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "dimension": 384,
+  "created_at": "2026-02-06T11:00:00Z"
 }
 ```
 
-### Analyzer with Retry Logic (analyzer.py)
+### 4. user_snapshots Collection
 
-**Analyzes profiles with automatic 429 handling:**
-
-```python
-# When ChatGPT/Gemini responds with 429 Too Many Requests:
-# Attempt 1: Sleep 1s, retry
-# Attempt 2: Sleep 2s, retry
-# Attempt 3: Sleep 4s, retry
-# Attempt 4: Sleep 8s, retry
-# Attempt 5: Sleep 16s, retry
-# If still failing, raise exception
-
-# This prevents: "OPENAI_API_KEY... quota exceeded" crashes
-# Successfully processed 6 users through retry logic
+```json
+{
+  "_id": "ObjectId(...)",
+  "platform": "instagram",
+  "user_id": "mondaypunday",
+  "username": "mondaypunday",
+  "user_info": {
+    "username": "mondaypunday",
+    "full_name": "Monday Punday",
+    "bio": "Comedian | Tour dates below",
+    "follower_count": 150000,
+    "following_count": 500,
+    "posts_count": 25
+  },
+  "posts": [
+    {
+      "id": "2982334644151768448",
+      "caption": "Dallas 12/22-23...",
+      "likes": 216879,
+      "comments": 599,
+      "timestamp": 1735167600,
+      "media_type": "video",
+      "media_url": "https://..."
+    }
+    // ... 24 more posts
+  ],
+  "snapshot_date": "2026-02-06T09:00:00Z"
+}
 ```
 
-### Duplicate Prevention (pipeline.py)
+### 5. raw_api_responses Collection
 
-**Prevents duplicate profiles on re-runs:**
-
-```python
-# Old approach (broken):
-profile = get_by_user_id(user_id)  # Didn't check platform, missed instagram profiles
-if not profile:
-    create_profile()  # Created duplicates for same user
-
-# New approach (fixed):
-profile = get_by_user_id(user_id, platform='instagram')  # Platform-specific check
-if profile:
-    collection.update_one(
-        {"_id": profile['_id']},
-        {"$set": {...new_data...}}
-    )  # Upsert existing record
-else:
-    create_profile()  # Only create if truly new
-```
-
-### Smart Batch Processing (batch_processor.py)
-
-**Intelligently processes multiple users:**
-
-```python
-# Flow:
-users_with_raw = get_users_with_raw_data()  # Query raw_api_responses
-users_with_profiles = get_users_with_profiles()  # Query user_profiles
-
-for user in users_with_raw:
-    if user in users_with_profiles:
-        skip(user)  # Already processed
-    else:
-        process_user(user)  # Process new user
-
-# Modes:
-# --all (default): Skip existing, process new
-# --force-all: Reprocess all users
-# --force [users]: Force reprocess specific users
+```json
+{
+  "_id": "ObjectId(...)",
+  "user_id": "mondaypunday",
+  "endpoint": "user_posts",
+  "filename": "instagram(mondaypunday)_posts_001.json",
+  "data": {
+    "items": [ /* raw API response */ ],
+    "next_cursor": "..."
+  },
+  "created_at": "2026-02-06T08:00:00Z"
+}
 ```
 
 ---
@@ -519,24 +456,29 @@ python3 batch_processor.py --force-all --limit 100  # Next batch
 
 ## 🐛 Known Issues & Solutions
 
-### Issue: FlagEmbedding Import Error
+### ~~Issue: FlagEmbedding Import Error~~ ✅ FIXED
 
 **Error:** `AttributeError: module 'transformers' has no attribute 'is_torch_fx_available'`
 
-**Status:** ✅ **Gracefully Handled** - Embedding generation is optional
+**Status:** ✅ **RESOLVED** - Fixed by downgrading transformers
 
-**Solution:** 
-- The analyzer catches this error and continues without embeddings
-- `user_style_embedding` will be empty array `[]` with dimension 0
-- Profile analysis still completes successfully
-- Embeddings can be generated later with different model if needed
+**Root Cause:** FlagEmbedding 1.3.5 is incompatible with transformers 5.0.0 (removed `is_torch_fx_available`)
 
-**Workaround (if you need embeddings):**
+**Solution:**
 ```bash
-# Try using a different embedding model
-pip install sentence-transformers
-# Then modify analyzer.py to use SentenceTransformer instead of FlagEmbedding
+pip install 'transformers<5.0.0'  # Will install 4.57.6
+pip install FlagEmbedding==1.3.5
 ```
+
+**Verification:**
+```bash
+python3 pipeline.py --diagnose
+# Should show: FLAG_EMBEDDING_AVAILABLE: True ✅
+```
+
+**Result:** User embeddings now generate successfully with **512 dimensions** using BAAI/bge-small-zh-v1.5 model.
+
+---
 
 ### Issue: OpenAI Rate Limit (429 Error)
 
@@ -725,7 +667,8 @@ python3 batch_processor.py
 
 ---
 
-**Last Updated:** January 15, 2024  
-**System Status:** ✅ All 6 users processed, no duplicates, retry logic active  
-**Tested with:** 6 Instagram creators across various niches
+**Last Updated:** February 06, 2025  
+**System Status:** ✅ Complete pipeline with multimodal embeddings - User profiles (512-dim) + Post embeddings (384-dim) working  
+**Tested with:** Instagram user mondaypunday - Full pipeline: fetch → analyze → user embedding (512-dim) → post embeddings (10 posts, 384-dim each)  
+**Known Issues:** FlagEmbedding compatibility FIXED (transformers<5.0.0)
 

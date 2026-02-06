@@ -328,9 +328,23 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
+    # Initialize embedding model if available
+    embedding_model = None
+    if FLAG_EMBEDDING_AVAILABLE:
+        try:
+            embedding_model_name = os.environ.get('EMBEDDING_MODEL', 'BAAI/bge-small-zh-v1.5')
+            print(f"📦 Loading embedding model: {embedding_model_name}")
+            embedding_model = FlagModel(embedding_model_name, 
+                                       query_instruction_for_retrieval="",
+                                       use_fp16=False)
+            print(f"✅ Embedding model loaded")
+        except Exception as e:
+            print(f"⚠️  Warning: Failed to load embedding model: {e}")
+            embedding_model = None
+    
     if args.user_id:
         # Process single user
-        success = process_instagram_user(args.user_id)
+        success = process_instagram_user(args.user_id, embedding_model)
         exit(0 if success else 1)
     elif args.diagnose:
         print("🔍 Running diagnostics...")
@@ -355,7 +369,7 @@ if __name__ == "__main__":
             exit(1)
 
         print(f"🚀 Running pipeline for {args.fetch_username}")
-        success = process_instagram_user(args.fetch_username)
+        success = process_instagram_user(args.fetch_username, embedding_model)
         exit(0 if success else 1)
     elif getattr(args, 'fetch_username_paged', None):
         # Fetch multiple pages of posts/reels and store them, do not analyze
