@@ -359,13 +359,15 @@ def fetch_user_info(username: str, save: bool = True) -> Dict[str, Any]:
     return data
 
 
-def fetch_user_posts(user_id: str, username: Optional[str] = None, count: int = 50, save: bool = True) -> Dict[str, Any]:
+def fetch_user_posts(user_id: str, username: Optional[str] = None, count: int = 50, save: bool = True, max_id: Optional[str] = None, page_num: int = 1) -> Dict[str, Any]:
     """Fetch user's posts from TikHub.
 
     - The TikHub API enforces a `count` <= 50. If the caller supplies a larger
       value we cap it to 50 and warn to avoid 422 errors.
     - Always write a local copy (via `_write_local`) to ensure reproducibility
       even if DB insert fails.
+    - max_id: Pagination cursor from previous response's next_max_id field
+    - page_num: Page number for local file naming (default 1)
     """
     token = _get_tikhub_token()
     base = _get_tikhub_base()
@@ -382,6 +384,10 @@ def fetch_user_posts(user_id: str, username: Optional[str] = None, count: int = 
 
     headers = {"Authorization": f"Bearer {token}"}
     params = {"user_id": user_id, "count": count}
+    
+    # Add pagination cursor if provided
+    if max_id:
+        params["max_id"] = max_id
 
     # Use retrying GET helper
     r = _http_get(url, headers=headers, params=params, timeout=60)
@@ -403,7 +409,7 @@ def fetch_user_posts(user_id: str, username: Optional[str] = None, count: int = 
 
     # Always write a local copy for reproducibility
     try:
-        _write_local(data, username or str(user_id), 'posts_list', 1)
+        _write_local(data, username or str(user_id), 'posts_list', page_num)
     except Exception:
         pass
 
@@ -414,11 +420,13 @@ def fetch_user_posts(user_id: str, username: Optional[str] = None, count: int = 
     return data
 
 
-def fetch_user_reels(user_id: str, username: Optional[str] = None, count: int = 50, save: bool = True) -> Dict[str, Any]:
+def fetch_user_reels(user_id: str, username: Optional[str] = None, count: int = 50, save: bool = True, max_id: Optional[str] = None, page_num: int = 1) -> Dict[str, Any]:
     """Fetch user's reels from TikHub.
 
     Cap `count` to 50 to comply with TikHub API limits and provide clearer
     error messages on failure.
+    - max_id: Pagination cursor from previous response's paging_info.max_id field
+    - page_num: Page number for local file naming (default 1)
     """
     token = _get_tikhub_token()
     base = _get_tikhub_base()
@@ -434,6 +442,10 @@ def fetch_user_reels(user_id: str, username: Optional[str] = None, count: int = 
 
     headers = {"Authorization": f"Bearer {token}"}
     params = {"user_id": user_id, "count": count}
+    
+    # Add pagination cursor if provided
+    if max_id:
+        params["max_id"] = max_id
 
     # Use retrying GET helper
     r = _http_get(url, headers=headers, params=params, timeout=60)
@@ -453,7 +465,7 @@ def fetch_user_reels(user_id: str, username: Optional[str] = None, count: int = 
     data = r.json()
 
     try:
-        _write_local(data, username or str(user_id), 'reels_list', 1)
+        _write_local(data, username or str(user_id), 'reels_list', page_num)
     except Exception:
         pass
 
