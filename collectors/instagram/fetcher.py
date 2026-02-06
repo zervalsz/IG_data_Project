@@ -476,26 +476,77 @@ def fetch_user_reels(user_id: str, username: Optional[str] = None, count: int = 
     return data
 
 
-def fetch_and_store(username: str, fetch_posts: bool = True, fetch_reels: bool = True, posts_count: int = 50, reels_count: int = 50) -> Dict[str, Any]:
+def fetch_and_store(username: str, fetch_posts: bool = True, fetch_reels: bool = True, posts_count: int = 50, reels_count: int = 50, posts_pages: int = 2, reels_pages: int = 2) -> Dict[str, Any]:
     """Fetch user info + posts/reels and store raw responses into DB.
+    
+    By default, fetches 2 pages each for posts and reels to get more comprehensive data.
+
+    Args:
+        username: Instagram username
+        fetch_posts: Whether to fetch posts
+        fetch_reels: Whether to fetch reels
+        posts_count: Items per page for posts (max 50)
+        reels_count: Items per page for reels (max 50)
+        posts_pages: Number of post pages to fetch (default 2)
+        reels_pages: Number of reel pages to fetch (default 2)
 
     Returns a dict with keys: user_info, posts, reels and inserted raw ids.
     """
     db = _get_mongo()
-    results = {'user_info': None, 'posts': None, 'reels': None, 'inserted_ids': []}
+    results = {'user_info': None, 'posts': [], 'reels': [], 'inserted_ids': []}
 
     user_info = fetch_user_info(username, save=True)
     results['user_info'] = user_info
     # Try to extract user_id from the user_info payload using a robust helper
     user_id = _extract_user_id(user_info)
 
-    # If user_id not found, leave as None; posts/reels API needs user_id - caller can pass one instead
+    # Fetch multiple pages of posts
     if fetch_posts and user_id:
-        posts = fetch_user_posts(user_id, username=username, count=posts_count, save=True)
-        results['posts'] = posts
+        for page in range(1, posts_pages + 1):
+            try:
+                if page == 1:
+                    posts = fetch_user_posts(user_id, username=username, count=posts_count, save=True, page_num=page)
+                    results['posts'].append(posts)
+                    # Check if there's a next page
+                    next_max_id = posts.get('data', {}).get('next_max_id')
+                    if not next_max_id:
+                        break  # No more pages
+                else:
+                    # Fetch next page using cursor
+                    posts = fetch_user_posts(user_id, username=username, count=posts_count, save=True, max_id=next_max_id, page_num=page)
+                    results['posts'].append(posts)
+                    # Update cursor for next iteration
+                    next_max_id = posts.get('data', {}).get('next_max_id')
+                    if not next_max_id:
+                        break  # No more pages
+            except Exception as e:
+                print(f"⚠️  Failed to fetch posts page {page}: {e}")
+                break
+                
+    # Fetch multiple pages of reels
     if fetch_reels and user_id:
-        reels = fetch_user_reels(user_id, username=username, count=reels_count, save=True)
-        results['reels'] = reels
+        for page in range(1, reels_pages + 1):
+            try:
+                if page == 1:
+                    reels = fetch_user_reels(user_id, username=username, count=reels_count, save=True, page_num=page)
+                    results['reels'].append(reels)
+                    # Check if there's a next page
+                    paging_info = reels.get('data', {}).get('paging_info', {})
+                    next_max_id = paging_info.get('max_id')
+                    if not next_max_id:
+                        break  # No more pages
+                else:
+                    # Fetch next page using cursor
+                    reels = fetch_user_reels(user_id, username=username, count=reels_count, save=True, max_id=next_max_id, page_num=page)
+                    results['reels'].append(reels)
+                    # Update cursor for next iteration
+                    paging_info = reels.get('data', {}).get('paging_info', {})
+                    next_max_id = paging_info.get('max_id')
+                    if not next_max_id:
+                        break  # No more pages
+            except Exception as e:
+                print(f"⚠️  Failed to fetch reels page {page}: {e}")
+                break
 
     # Upsert snapshot for this username using adapter.normalize_snapshot
     try:
