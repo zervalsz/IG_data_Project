@@ -174,7 +174,7 @@ def process_instagram_user(user_id: str, embedding_model: FlagModel = None):
             'platform': 'instagram',
             'user_id': username,
             'user_style_embedding': profile_data['user_style_embedding'],
-            'model': os.environ.get('EMBEDDING_MODEL', 'BAAI/bge-small-zh-v1.5'),
+            'model': os.environ.get('EMBEDDING_MODEL', 'BAAI/bge-small-en-v1.5'),
             'dimension': len(profile_data['user_style_embedding']),
             'created_at': datetime.now(),
             'updated_at': datetime.now()
@@ -213,7 +213,7 @@ def process_all_instagram_users(limit: int = None):
         try:
             print("\n📦 Loading FlagEmbedding model...")
             embedding_model = FlagModel(
-                os.environ.get('EMBEDDING_MODEL', 'BAAI/bge-small-zh-v1.5'),
+                os.environ.get('EMBEDDING_MODEL', 'BAAI/bge-small-en-v1.5'),
                 query_instruction_for_retrieval="",
                 use_fp16=True
             )
@@ -332,7 +332,7 @@ if __name__ == "__main__":
     embedding_model = None
     if FLAG_EMBEDDING_AVAILABLE:
         try:
-            embedding_model_name = os.environ.get('EMBEDDING_MODEL', 'BAAI/bge-small-zh-v1.5')
+            embedding_model_name = os.environ.get('EMBEDDING_MODEL', 'BAAI/bge-small-en-v1.5')
             print(f"📦 Loading embedding model: {embedding_model_name}")
             embedding_model = FlagModel(embedding_model_name, 
                                        query_instruction_for_retrieval="",

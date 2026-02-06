@@ -85,8 +85,8 @@ This pipeline provides a full solution for Instagram user analysis:
                        ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ 4. USER EMBEDDING (pipeline.py + FlagEmbedding)            │
-│    profile_data → BAAI/bge-small-zh-v1.5 → user_embeddings │
-│    • 512 dimensions                                        │
+│    profile_data → BAAI/bge-small-en-v1.5 → user_embeddings │
+│    • 384 dimensions                                        │
 │    • Text-based embedding from user style                  │
 └──────────────────────┬──────────────────────────────────────┘
                        ↓
@@ -321,9 +321,9 @@ python3 pipeline.py --diagnose
   "_id": "ObjectId(...)",
   "platform": "instagram",
   "user_id": "mondaypunday",
-  "user_style_embedding": [0.0234, -0.1245, 0.0567, ...],  // 512 floats
-  "model": "BAAI/bge-small-zh-v1.5",
-  "dimension": 512,
+  "user_style_embedding": [0.0234, -0.1245, 0.0567, ...],  // 384 floats
+  "model": "BAAI/bge-small-en-v1.5",
+  "dimension": 384,
   "created_at": "2026-02-06T10:35:00Z",
   "updated_at": "2026-02-06T10:35:00Z"
 }
@@ -476,7 +476,7 @@ python3 pipeline.py --diagnose
 # Should show: FLAG_EMBEDDING_AVAILABLE: True ✅
 ```
 
-**Result:** User embeddings now generate successfully with **512 dimensions** using BAAI/bge-small-zh-v1.5 model.
+**Result:** User embeddings now generate successfully with **384 dimensions** using BAAI/bge-small-en-v1.5 model (English-optimized).
 
 ---
 
@@ -668,7 +668,7 @@ python3 batch_processor.py
 ---
 
 **Last Updated:** February 06, 2025  
-**System Status:** ✅ Complete pipeline with multimodal embeddings - User profiles (512-dim) + Post embeddings (384-dim) working  
-**Tested with:** Instagram user mondaypunday - Full pipeline: fetch → analyze → user embedding (512-dim) → post embeddings (10 posts, 384-dim each)  
+**System Status:** ✅ Complete pipeline with multimodal embeddings - User profiles (384-dim) + Post embeddings (384-dim) working  
+**Tested with:** Instagram user mondaypunday - Full pipeline: fetch → analyze → user embedding (384-dim, English-optimized) → post embeddings (10 posts, 384-dim each)  
 **Known Issues:** FlagEmbedding compatibility FIXED (transformers<5.0.0)
 
