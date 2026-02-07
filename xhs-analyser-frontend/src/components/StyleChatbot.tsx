@@ -11,11 +11,8 @@ interface Creator {
 
 interface GenerateResult {
   success: boolean;
-  creator_name: string;
-  user_input: string;
-  generated_content: string;
-  profile_topics: string[];
-  note_samples_count: number;
+  content: string;  // Backend returns 'content', not 'generated_content'
+  error: string;
 }
 
 export function StyleChatbot() {
@@ -30,23 +27,29 @@ export function StyleChatbot() {
   useEffect(() => {
     const loadCreators = async () => {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-        const response = await fetch(`${API_URL}/api/style/creators`);
+        // Construct backend URL for GitHub Codespaces
+        let API_URL = 'http://localhost:5001';
+        if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
+          API_URL = window.location.origin.replace('-3000.', '-5001.');
+        }
+        console.log('[StyleChatbot] API URL:', API_URL);
+        // Fetch Instagram creators only
+        const response = await fetch(`${API_URL}/api/style/creators?platform=instagram`);
         const data = await response.json();
         
         if (data.success) {
           setCreators(data.creators);
-          // 默认选择硅谷樱花小姐姐
+          // Default to first Instagram creator with data
           const defaultCreator = data.creators.find((c: Creator) => 
-            c.name === "硅谷樱花小姐姐🌸"
-          );
+            c.name === "mondaypunday" || c.name === "herfirst100k"
+          ) || data.creators[0];
           if (defaultCreator) {
             setSelectedCreator(defaultCreator.name);
           }
         }
       } catch (err) {
-        console.error("加载创作者列表失败:", err);
-        setError("无法加载创作者列表");
+        console.error("Failed to load creators:", err);
+        setError("Unable to load creator list");
       }
     };
 
@@ -55,7 +58,7 @@ export function StyleChatbot() {
 
   const handleGenerate = async () => {
     if (!selectedCreator || !userInput.trim()) {
-      setError("请选择创作者并输入内容描述");
+      setError("Please select a creator and enter content description");
       return;
     }
 
@@ -64,7 +67,11 @@ export function StyleChatbot() {
     setGeneratedContent("");
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      // Construct backend URL for GitHub Codespaces
+      let API_URL = 'http://localhost:5001';
+      if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
+        API_URL = window.location.origin.replace('-3000.', '-5001.');
+      }
       const response = await fetch(`${API_URL}/api/style/generate`, {
         method: 'POST',
         headers: {
@@ -73,19 +80,20 @@ export function StyleChatbot() {
         body: JSON.stringify({
           creator_name: selectedCreator,
           user_input: userInput,
+          platform: 'instagram', // Specify Instagram platform
         }),
       });
 
       const data: GenerateResult = await response.json();
 
       if (data.success) {
-        setGeneratedContent(data.generated_content);
+        setGeneratedContent(data.content);  // Use 'content' from backend
       } else {
-        setError("生成失败");
+        setError(data.error || "Generation failed");
       }
     } catch (err) {
-      console.error("生成内容失败:", err);
-      setError("生成失败，请检查API服务是否启动");
+      console.error("Content generation failed:", err);
+      setError("Generation failed, please check if API service is running");
     } finally {
       setLoading(false);
     }

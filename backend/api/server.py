@@ -5,6 +5,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import sys
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv(Path(__file__).parent.parent / '.env')
 
 # 添加父目录到路径以支持相对导入
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -18,11 +22,11 @@ app = FastAPI(
     description="小红书数据分析API - 三层架构版本"
 )
 
-# 配置CORS
+# 配置CORS - Allow all origins for Codespaces
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境应该限制具体域名
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins for GitHub Codespaces
+    allow_credentials=False,  # Must be False when using wildcard origins
     allow_methods=["*"],
     allow_headers=["*"],
 )

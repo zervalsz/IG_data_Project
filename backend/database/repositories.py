@@ -129,16 +129,25 @@ class UserProfileRepository(BaseRepository):
     
     def get_profile_by_nickname(self, nickname: str, platform: str = "xiaohongshu") -> Optional[Dict[str, Any]]:
         """
-        根据昵称获取用户档案
+        根据昵称或user_id获取用户档案
+        先尝试用nickname查询，如果找不到则用user_id查询
         
         Args:
-            nickname: 用户昵称
+            nickname: 用户昵称或user_id
             platform: 平台类型
             
         Returns:
             用户档案数据 or None
         """
-        return self.find_one({"nickname": nickname, "platform": platform})
+        # 先尝试用nickname查询
+        profile = self.find_one({"nickname": nickname, "platform": platform})
+        if profile:
+            return profile
+        
+        # 如果nickname查询失败，尝试用user_id查询
+        # 这对Instagram等平台很有用，因为它们可能没有nickname字段
+        profile = self.find_one({"user_id": nickname, "platform": platform})
+        return profile
 
 
 # =====================================================

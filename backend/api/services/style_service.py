@@ -23,17 +23,23 @@ class StyleGenerationService:
         self.snapshot_repo = UserSnapshotRepository()
         self.prompt_repo = StylePromptRepository()
         
-        # 初始化DeepSeek API客户端
-        api_key = os.getenv("DEEPSEEK_API_KEY", "")
-        if not api_key:
-            raise ValueError("❌ DEEPSEEK_API_KEY环境变量未设置")
-        
-        self.client = OpenAI(
-            api_key=api_key,
-            base_url="https://api.deepseek.com"
-        )
+        # Lazy initialization for OpenAI client (only when needed for generation)
+        self.client = None
         
         print("✅ StyleGenerationService 初始化完成")
+    
+    def _ensure_client(self):
+        """Lazily initialize OpenAI API client when needed"""
+        if self.client is None:
+            # 初始化OpenAI API客户端
+            api_key = os.getenv("OPENAI_API_KEY", "")
+            if not api_key:
+                raise ValueError("❌ OPENAI_API_KEY环境变量未设置")
+            
+            self.client = OpenAI(
+                api_key=api_key
+            )
+            print("✅ OpenAI API client initialized")
     
     def get_available_creators(self, platform: str = "xiaohongshu") -> List[Dict[str, Any]]:
         """
@@ -50,9 +56,9 @@ class StyleGenerationService:
             
             creators = []
             for profile in profiles:
-                nickname = profile.get("nickname", "未知")
-                # 使用nickname作为user_id（因为user_id可能为空）
-                user_id = profile.get("user_id") or nickname
+                # For Instagram, user_id is the primary identifier
+                user_id = profile.get("user_id", "未知")
+                nickname = profile.get("nickname") or user_id  # Use user_id as display name if no nickname
                 
                 # 从profile_data中提取topics和style
                 profile_data = profile.get("profile_data", {})
@@ -68,8 +74,11 @@ class StyleGenerationService:
                     elif "关键主题" in profile_data:
                         topics = profile_data["关键主题"]
                     
-                    # 尝试提取style (检查content_style, style, 风格, 写作风格)
-                    if "content_style" in profile_data:
+                    # 尝试提取style - Instagram profiles have it in user_style.tone
+                    user_style = profile_data.get("user_style", {})
+                    if isinstance(user_style, dict) and "tone" in user_style:
+                        style = user_style["tone"]
+                    elif "content_style" in profile_data:
                         style_list = profile_data["content_style"]
                         style = ", ".join(style_list) if isinstance(style_list, list) else str(style_list)
                     elif "style" in profile_data:
@@ -155,7 +164,8 @@ class StyleGenerationService:
         creator_profile: Dict[str, Any],
         sample_notes: List[Dict[str, Any]],
         user_topic: str,
-        creator_name: str
+        creator_name: str,
+        platform: str = "xiaohongshu"
     ) -> str:
         """
         构建风格生成提示词
@@ -174,9 +184,9 @@ class StyleGenerationService:
             prompt_data = self.prompt_repo.get_by_type("style_generation")
             if not prompt_data:
                 print("⚠️  未找到提示词模板，使用默认模板")
-                template = self._get_default_template()
+                template = self._get_default_template(platform)
             else:
-                template = prompt_data.get("template", self._get_default_template())
+                template = prompt_data.get("template", self._get_default_template(platform))
             
             # 提取档案信息
             topics = ", ".join(creator_profile.get("topics", []))
@@ -204,7 +214,7 @@ class StyleGenerationService:
             
         except Exception as e:
             print(f"❌ 构建提示词失败: {e}")
-            return self._get_fallback_prompt(creator_name, user_topic)
+            return self._get_fallback_prompt(creator_name, user_topic, platform)
     
     def generate_content(
         self,
@@ -224,6 +234,9 @@ class StyleGenerationService:
             生成结果 {"success": bool, "content": str, "error": str}
         """
         try:
+            # Ensure DeepSeek API client is initialized
+            self._ensure_client()
+            
             # 1. 加载创作者档案
             print(f"📥 加载创作者档案: {creator_name}")
             creator_profile = self.load_creator_profile(creator_name, platform)
@@ -246,15 +259,18 @@ class StyleGenerationService:
                 creator_profile,
                 sample_notes,
                 user_topic,
-                creator_name
+                creator_name,
+                platform
             )
             
-            # 4. 调用DeepSeek API
-            print(f"🤖 调用DeepSeek API生成内容...")
+            # 4. 调用OpenAI API
+            print(f"🤖 调用OpenAI API生成内容...")
+            # Use English system message for Instagram
+            system_message = "You are a professional content creation assistant." if platform == "instagram" else "你是一位专业的内容创作助手。"
             response = self.client.chat.completions.create(
-                model="deepseek-chat",
+                model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "你是一位专业的内容创作助手。"},
+                    {"role": "system", "content": system_message},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
@@ -280,9 +296,40 @@ class StyleGenerationService:
                 "error": error_msg
             }
     
-    def _get_default_template(self) -> str:
+    def _get_default_template(self, platform: str = "xiaohongshu") -> str:
         """获取默认提示词模板"""
-        return """你是一位经验丰富的小红书内容创作者，擅长模仿不同博主的风格进行创作。
+        if platform == "instagram":
+            return """You are an experienced Instagram content creator who excels at mimicking different creator styles.
+
+【Creator Profile】
+Username: {nickname}
+Content Topics: {topics}
+Content Style: {content_style}
+Key Values: {value_points}
+
+【Reference Posts】(Typical posts from this creator)
+{sample_notes}
+
+【Task】
+Create an Instagram post in this creator's style about the topic: "{user_topic}"
+
+【Requirements】
+1. Writing style should closely match this creator's characteristics
+2. Maintain their typical expression and tone
+3. Reflect their values and content focus
+4. Create an engaging caption
+5. Add appropriate emojis for engagement
+6. Include 3-5 relevant hashtags at the end
+
+【Output Format】
+Caption:
+[Write the caption here]
+
+Hashtags:
+#hashtag1 #hashtag2 #hashtag3
+"""
+        else:
+            return """你是一位经验丰富的小红书内容创作者，擅长模仿不同博主的风格进行创作。
 
 【被模仿者档案】
 昵称：{nickname}
@@ -314,9 +361,23 @@ class StyleGenerationService:
 #标签1 #标签2 #标签3
 """
     
-    def _get_fallback_prompt(self, creator_name: str, user_topic: str) -> str:
+    def _get_fallback_prompt(self, creator_name: str, user_topic: str, platform: str = "xiaohongshu") -> str:
         """获取降级提示词"""
-        return f"""请以"{creator_name}"的风格，为主题"{user_topic}"创作一篇小红书笔记。
+        if platform == "instagram":
+            return f"""Create an Instagram post in the style of "{creator_name}" about the topic: "{user_topic}"
+
+Requirements:
+1. Engaging caption
+2. Authentic and valuable content
+3. Add appropriate emojis
+4. Include 3-5 hashtags
+
+Output format:
+Caption: [caption]
+Hashtags: #hashtag1 #hashtag2
+"""
+        else:
+            return f"""请以"{creator_name}"的风格，为主题"{user_topic}"创作一篇小红书笔记。
 
 要求：
 1. 标题吸引人
