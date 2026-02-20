@@ -1,10 +1,10 @@
-import { HomePage } from '@/components/HomePage'
+import { LandingPage } from '@/components/LandingPage'
 
 interface PageProps {
   params: { locale: string }
 }
 
 export default async function LocalePage({ params }: PageProps) {
-  // render the same HomePage used under src/app
-  return <HomePage />
+  // render the new LandingPage
+  return <LandingPage />
 }

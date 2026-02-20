@@ -148,6 +148,40 @@ class UserProfileRepository(BaseRepository):
         # 这对Instagram等平台很有用，因为它们可能没有nickname字段
         profile = self.find_one({"user_id": nickname, "platform": platform})
         return profile
+    
+    def get_follower_count(self, user_id: str, platform: str = "instagram") -> Optional[int]:
+        """
+        从raw_api_responses获取用户的粉丝数
+        
+        Args:
+            user_id: 用户ID/用户名
+            platform: 平台类型
+            
+        Returns:
+            粉丝数 or None
+        """
+        # Query raw_api_responses for user_info endpoint
+        raw_collection = self.db["raw_api_responses"]
+        doc = raw_collection.find_one({
+            "platform": platform,
+            "username": user_id,
+            "endpoint": {"$regex": "user_info", "$options": "i"}
+        })
+        
+        if doc and "raw" in doc:
+            try:
+                # Navigate: raw.data.data.user.edge_followed_by.count
+                raw = doc["raw"]
+                data1 = raw.get("data", {})
+                data2 = data1.get("data", {})
+                user = data2.get("user", {})
+                edge_followed_by = user.get("edge_followed_by", {})
+                count = edge_followed_by.get("count", 0)
+                return count if count > 0 else None
+            except (KeyError, TypeError, AttributeError):
+                return None
+        
+        return None
 
 
 # =====================================================

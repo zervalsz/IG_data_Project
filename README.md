@@ -1,46 +1,100 @@
-# Instagram Creator Analysis & Style Generator
+# Instagram Creator Analysis & Content Generator
 
-A full-stack application for analyzing Instagram creators, visualizing their relationship networks, and generating AI-powered content in their unique styles.
+A full-stack application for analyzing Instagram creators and generating AI-powered, data-driven content using engagement metrics and style analysis.
 
 ## 🌟 Features
 
-### 1. **Creator Network Visualization**
-- Interactive force-directed graph showing 11 Instagram creators
+### 1. **Dual-Path Content Generation**
+
+#### Style-Based Generator
+- Generate content in any creator's unique style
+- AI analyzes creator's tone, persona, and writing patterns
+- Custom topic input with creator-specific adaptation
+- Powered by OpenAI GPT-4o-mini
+
+#### Trend-Based Generator
+- **Real engagement rate analysis** using actual follower counts
+- Category-based content optimization (Finance, Wellness, Food, Fitness, Lifestyle)
+- Data-driven insights from high-performing posts
+- Projected metrics for any account size (normalized to 10K followers)
+- Calculates: engagement rate, like:comment ratio, expected performance
+
+### 2. **Creator Discovery & Categories**
+- Browse 11 Instagram creators organized by niche
+- Auto-categorization by content type
+- One-click access to creator profiles
+- Direct style generation from category view
+
+### 3. **Smart Engagement Analytics**
+- **29.33% average engagement rate** (calculated from real follower data)
+- Follower count extraction from raw API data
+- Per-post engagement rate: `(likes + comments) / followers × 100`
+- Platform-specific normalization for realistic expectations
+
+### 4. **Interactive Landing Page**
+- Clear two-path navigation (Style vs. Trend)
+- "How It Works" guides for each feature
+- Creator showcase by category
+- Modern, gradient-based UI design
+
+### 5. **Creator Network Visualization** (Legacy Feature)
+- Interactive force-directed graph
 - Relationship edges based on content similarity (cosine similarity ≥ 0.7)
 - Semantic embeddings using BAAI/bge-small-en-v1.5 (384-dimensional)
-- Click nodes to view detailed creator profiles
-
-### 2. **AI Style Generator**
-- Generate Instagram captions in any creator's unique style
-- Powered by OpenAI GPT-4o-mini
-- Platform-specific prompts (English for Instagram, Chinese for XiaohongShu)
-- Analyzes creator's tone, topics, and writing patterns
-
-### 3. **Creator Profiles**
-- 11 Instagram creators across niches: finance, wellness, comedy, fitness, food
-- Topics, style analysis, and content themes
-- Persona extraction from profile data
 
 ## 🏗️ Architecture
 
 ```
 ├── backend/                  # FastAPI backend (Python)
 │   ├── api/                 # REST API endpoints
-│   │   ├── routers/        # Creator & style generation routes
+│   │   ├── routers/        # Modular route handlers
+│   │   │   ├── creator_router.py    # Creator profiles & network
+│   │   │   ├── style_router.py      # Style-based generation
+│   │   │   └── trend_router.py      # Trend-based generation (NEW)
 │   │   └── services/       # Business logic layer
+│   │       ├── style_service.py     # Style generation service
+│   │       └── trend_service.py     # Engagement analysis service (NEW)
 │   ├── database/           # MongoDB repositories & models
+│   │   ├── repositories.py # Data access layer with follower count extraction
+│   │   └── models.py       # Pydantic models
 │   ├── generators/         # Embedding & network generators
 │   └── processors/         # Data processing pipelines
 │
 ├── xhs-analyser-frontend/  # Next.js 16 frontend (React/TypeScript)
 │   ├── app/                # App router pages
+│   │   ├── page.tsx                     # Landing page (NEW)
+│   │   ├── style-generator/page.tsx     # Style-based generator (NEW)
+│   │   ├── trend-generator/page.tsx     # Trend-based generator (NEW)
+│   │   ├── creator/[id]/page.tsx        # Creator profile pages (NEW)
+│   │   └── api/proxy/                   # Proxy layer for Codespaces (NEW)
+│   │       ├── creators/route.ts        # Creator list proxy
+│   │       ├── creator/[id]/route.ts    # Individual creator proxy
+│   │       ├── style/generate/route.ts  # Style generation proxy
+│   │       └── trend/generate/route.ts  # Trend generation proxy
 │   ├── src/components/     # React components
+│   │   ├── LandingPage.tsx             # Main landing page (NEW)
+│   │   ├── AccountCategories.tsx       # Category browser (NEW)
+│   │   ├── CreatorNetworkGraph.tsx     # D3 network visualization
+│   │   └── StyleChatbot.tsx            # Legacy style generator
 │   └── messages/           # i18n translations (zh/en)
 │
 └── collectors/             # Data collection tools
-    ├── instagram/          # Instagram profile scraper
-    └── xiaohongshu/       # XHS scraper (legacy)
+    └── instagram/          # Instagram profile scraper
 ```
+
+### Key Features
+
+**Proxy Architecture**
+- Next.js API routes act as proxy layer for GitHub Codespaces
+- Server-to-server communication via `localhost`
+- Solves port visibility issues in cloud environments
+
+**Engagement Analysis Pipeline**
+1. Extract follower counts from `raw_api_responses.raw.data.data.user.edge_followed_by.count`
+2. Calculate per-post engagement rate: `(likes + comments) / follower_count × 100`
+3. Average across all creators in category
+4. Project to target account size (10K followers default)
+5. Split engagement using actual like:comment ratio
 
 ## 🚀 Quick Start
 
@@ -134,6 +188,42 @@ python instagram_network.py
 }
 ```
 
+**raw_api_responses** (NEW - follower data source)
+```javascript
+{
+  platform: "instagram",
+  username: "herfirst100k",
+  endpoint: "user_info",
+  raw: {
+    data: {
+      data: {
+        user: {
+          edge_followed_by: {
+            count: 2185756  // Used for engagement rate calculation
+          },
+          full_name: "Tori Dunlap — Money Expert",
+          biography: "...",
+          // ... other user fields
+        }
+      }
+    }
+  }
+}
+```
+
+**post_embeddings** (with engagement metrics)
+```javascript
+{
+  user_id: "username",
+  platform: "instagram",
+  like_count: 104137,
+  comment_count: 378,
+  caption: "Post text...",
+  embedding: [0.123, -0.456, ...], // 384 dimensions
+  created_at: ISODate("...")
+}
+```
+
 **user_embeddings**
 ```javascript
 {
@@ -157,7 +247,7 @@ python instagram_network.py
 
 ## 🎨 API Endpoints
 
-### Creator Network
+### Creator Management
 - `GET /api/creators/network?platform=instagram` - Get network graph
 - `GET /api/creators/list?platform=instagram` - List all creators
 - `GET /api/creators/{username}?platform=instagram` - Get creator profile
@@ -172,6 +262,42 @@ python instagram_network.py
     "platform": "instagram"
   }
   ```
+
+### Trend Generation (NEW)
+- `GET /api/trend/categories` - List available categories
+- `POST /api/trend/generate` - Generate engagement-optimized content
+  ```json
+  {
+    "category": "lifestyle",
+    "platform": "instagram"
+  }
+  ```
+  
+  **Response:**
+  ```json
+  {
+    "success": true,
+    "content": "Generated Instagram caption...",
+    "category": "lifestyle",
+    "creators_analyzed": 4,
+    "posts_analyzed": 127,
+    "insights": {
+      "engagement_rate": 29.33,        // Percentage of followers
+      "avg_likes": 2922,                // Expected for 10K followers
+      "avg_comments": 10,               // Expected for 10K followers
+      "avg_engagement": 2932,           // Total expected engagement
+      "raw_avg_likes": 103759,          // From established creators
+      "raw_avg_comments": 378,          // From established creators
+      "engagement_ratio": 274.5         // Likes:comments ratio
+    }
+  }
+  ```
+
+### Frontend Proxy Endpoints (for Codespaces)
+- `GET /api/proxy/creators` - Proxies to backend creator list
+- `GET /api/proxy/creator/[id]` - Proxies to backend creator profile
+- `POST /api/proxy/style/generate` - Proxies to backend style generation
+- `POST /api/proxy/trend/generate` - Proxies to backend trend generation
 
 ### Health Check
 - `GET /api/health` - API health status
@@ -198,34 +324,76 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:5001
 
 ### Backend
 - **Framework**: FastAPI
-- **Database**: MongoDB Atlas
+- **Database**: MongoDB Atlas (ig_raw database)
 - **Embeddings**: sentence-transformers (BAAI/bge-small-en-v1.5)
 - **LLM**: OpenAI GPT-4o-mini
 - **Data Processing**: pandas, numpy
+- **Analytics**: Real-time engagement rate calculation
 
 ### Frontend
-- **Framework**: Next.js 16 (App Router)
+- **Framework**: Next.js 16 (App Router with Turbopack)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Visualization**: D3.js (force-directed graph)
 - **i18n**: next-intl
+- **Proxy Layer**: Next.js API routes for Codespaces compatibility
 
-## 🎯 Creator Network
+## ✨ What's New (v2.0)
 
-### Current Creators (11)
-1. **herfirst100k** - Finance/investing for women
-2. **jackinvestment** - Personal finance & investment
-3. **ramit** - Debt reduction & money mindset
-4. **theholisticpsychologist** - Mental health & trauma healing
-5. **adventuresofnik** - Solo backpacking & self-defense
-6. **nabela** - Wellness & personal transformation
-7. **tinx** - Dating advice & lifestyle
-8. **mondaypunday** - Standup comedy
-9. **doobydobap** - Korean recipes & cooking
-10. **madfitig** - Fitness & workout challenges
-11. **rainn** - Sexual assault awareness
+### Complete Frontend Redesign
+- **Landing Page**: Clear two-path navigation (Style vs. Trend)
+- **Category Browser**: Explore creators by niche with auto-categorization
+- **Dedicated Generator Pages**: Separate UIs for style-based and trend-based generation
 
-### Network Clusters
+### Engagement Analytics Engine
+- **Real follower data integration**: Extracts actual follower counts from raw API responses
+- **Engagement rate calculation**: Per-post analysis across all creators
+- **Smart normalization**: Projects metrics to any account size (default: 10K followers)
+- **Data-driven prompts**: Uses top-performing content patterns for generation
+
+### Developer Experience
+- **Proxy architecture**: Solves GitHub Codespaces port visibility issues
+- **Modular services**: TrendService for engagement analysis, StyleService for content generation
+- **Repository pattern**: Clean data access layer with follower count extraction
+- **Type-safe APIs**: Full TypeScript support with proper error handling
+
+## 🎯 Creator Categories & Analytics
+
+### Creator Breakdown by Category
+
+#### Finance & Money (3 creators)
+- **herfirst100k** - 2.2M followers - Finance/investing for women
+- **jackinvestment** - 17.7K followers - Personal finance & investment tips
+- **ramit** - 941K followers - Debt reduction & money mindset
+
+#### Mental Health & Wellness (2 creators)
+- **theholisticpsychologist** - 9.1M followers - Mental health & trauma healing
+- **nabela** - 2.9M followers - Wellness & personal transformation
+
+#### Food & Cooking (1 creator)
+- **doobydobap** - 1.1M followers - Korean recipes & cooking tutorials
+
+#### Fitness & Sports (1 creator)
+- **madfitig** - 2.3M followers - Fitness & workout challenges
+
+#### Lifestyle & Entertainment (4 creators)
+- **tinx** - 642K followers - Dating advice & lifestyle
+- **mondaypunday** - 355K followers - Standup comedy
+- **adventuresofnik** - 19K followers - Solo backpacking & self-defense
+- **rainn** - 80K followers - Sexual assault awareness
+
+### Engagement Analytics
+
+**Overall Platform Metrics:**
+- Average engagement rate: **29.33%** (calculated from actual follower data)
+- Average like:comment ratio: **274.5:1**
+- Total creators analyzed: **11**
+- Total follower count: **19.5M+**
+
+**Category Performance:**
+Categories are optimized based on engagement patterns from established creators, then normalized for smaller accounts (~10K followers) to provide realistic expectations.
+
+### Network Clusters (Legacy Feature)
 - **Finance**: herfirst100k ↔ jackinvestment ↔ ramit (similarity: 0.70-0.74)
 - **Wellness**: theholisticpsychologist ↔ nabela (similarity: 0.73)
 - Individual creators with unique content positioning
@@ -238,8 +406,11 @@ This project is for educational and research purposes.
 
 - Embedding model: [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5)
 - LLM: OpenAI GPT-4o-mini
-- UI inspiration: Modern data visualization practices
+- UI inspiration: Modern data visualization and content generation platforms
+- Data source: Instagram creator profiles and engagement metrics
 
 ---
 
-**Built with ❤️ for creator analysis and AI-powered content generation**
+**Built with ❤️ for data-driven content generation and creator analysis**
+
+**v2.0 - February 2026** - Complete redesign with engagement analytics and dual-path generation

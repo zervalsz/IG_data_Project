@@ -14,7 +14,7 @@ load_dotenv(Path(__file__).parent.parent / '.env')
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # 导入新的路由（使用Service层和Database层）
-from api.routers import style_router, creator_router, instagram_router
+from api.routers import style_router, creator_router, instagram_router, trend_router
 
 app = FastAPI(
     title="XHS Data Analysis API",
@@ -35,6 +35,7 @@ app.add_middleware(
 app.include_router(style_router, tags=["风格生成"])
 app.include_router(creator_router, tags=["创作者数据"])
 app.include_router(instagram_router, tags=["instagram"])
+app.include_router(trend_router, tags=["趋势生成"])
 
 
 @app.get("/")
