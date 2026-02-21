@@ -10,6 +10,7 @@ from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
 from FlagEmbedding import FlagModel
+import numpy as np
 
 # 添加backend到路径
 project_root = Path(__file__).resolve().parent.parent.parent
@@ -23,7 +24,7 @@ if env_file.exists():
 else:
     load_dotenv(backend_path / '.env')
 
-from database import UserSnapshotRepository, UserProfileRepository, UserEmbeddingRepository
+from database import UserSnapshotRepository, UserProfileRepository, UserEmbeddingRepository, PostEmbeddingRepository
 
 # 导入同目录的analyzer模块
 sys.path.insert(0, str(Path(__file__).parent))
@@ -136,6 +137,69 @@ def process_user(user_id: str, embedding_model: FlagModel = None):
         else:
             embedding_repo.create_embedding(embedding_doc)
             print(f"✅ 已创建 user_embeddings")
+    
+    # 4. 处理单个帖子的embedding
+    print(f"\n📝 步骤 4: 处理单个帖子embedding...")
+    categories = profile_data.get('categories', ['Lifestyle'])
+    print(f"   - 分类: {', '.join(categories)}")
+    
+    post_repo = PostEmbeddingRepository()
+    embedded_count = 0
+    skipped_count = 0
+    
+    for note in notes:
+        note_id = note.get('note_id') or note.get('id', '')
+        if not note_id:
+            skipped_count += 1
+            continue
+        
+        # 检查是否已存在
+        existing_post = post_repo.get_by_post_id(note_id, platform='xiaohongshu')
+        if existing_post:
+            skipped_count += 1
+            continue
+        
+        # 构建post文本
+        title = note.get('title', '')
+        desc = note.get('desc', '')
+        tags = note.get('tag_list', [])
+        if isinstance(tags, dict):
+            tags = list(tags.values())
+        tags_text = ' '.join(tags) if isinstance(tags, list) else ''
+        
+        post_text = f"{title} {desc} {tags_text}".strip()
+        
+        if not post_text:
+            skipped_count += 1
+            continue
+        
+        # 生成embedding
+        post_embedding = embedding_model.encode([post_text])
+        if hasattr(post_embedding, 'tolist'):
+            emb = post_embedding.tolist()[0]
+        else:
+            emb = np.array(post_embedding).tolist()
+        
+        # 创建post_embedding文档
+        post_doc = {
+            'post_id': note_id,
+            'user_id': user_id,
+            'username': nickname,
+            'platform': 'xiaohongshu',
+            'embedding': emb,
+            'caption': f"{title}\n{desc}",
+            'categories': categories,  # 从用户profile继承
+            'like_count': note.get('liked_count', 0),
+            'comment_count': note.get('comment_count', 0),
+            'model': 'BAAI/bge-small-zh-v1.5',
+            'dimension': len(emb),
+            'created_at': datetime.now()
+        }
+        
+        post_repo.create_embedding(post_doc)
+        embedded_count += 1
+    
+    print(f"✅ 帖子embedding完成: {embedded_count} 个新增, {skipped_count} 个跳过")
     
     print(f"\n✨ 用户 {nickname} 处理完成！")
     return True

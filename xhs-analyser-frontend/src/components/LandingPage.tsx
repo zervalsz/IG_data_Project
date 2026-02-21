@@ -19,6 +19,45 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* How It Works */}
+      <section className="container mx-auto px-6 py-12">
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl shadow-xl p-10 text-white">
+          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                1
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Explore Creators</h3>
+              <p className="text-purple-100">
+                Browse creators by category and learn about their unique style
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                2
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Choose Your Path</h3>
+              <p className="text-purple-100">
+                Pick style-based generation or trend-optimized content
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                3
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Generate Content</h3>
+              <p className="text-purple-100">
+                Get AI-powered Instagram captions and hashtags instantly
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* What We Offer Section */}
       <section className="container mx-auto px-6 py-12">
         <div className="bg-white rounded-3xl shadow-xl p-10">
@@ -73,7 +112,7 @@ export function LandingPage() {
       </section>
 
       {/* Explore Creators Section */}
-      <section className="container mx-auto px-6 py-12">
+      <section id="creators" className="container mx-auto px-6 py-12 pb-20">
         <div className="bg-white rounded-3xl shadow-xl p-10">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">
             Explore Our Creators
@@ -83,45 +122,6 @@ export function LandingPage() {
           </p>
           
           <AccountCategories />
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="container mx-auto px-6 py-12 pb-20">
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl shadow-xl p-10 text-white">
-          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                1
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Explore Creators</h3>
-              <p className="text-purple-100">
-                Browse creators by category and learn about their unique style
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                2
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Choose Your Path</h3>
-              <p className="text-purple-100">
-                Pick style-based generation or trend-optimized content
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                3
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Generate Content</h3>
-              <p className="text-purple-100">
-                Get AI-powered Instagram captions and hashtags instantly
-              </p>
-            </div>
-          </div>
         </div>
       </section>
     </main>

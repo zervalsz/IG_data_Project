@@ -77,16 +77,21 @@ def build_prompt_for_profile(user_desc: str, notes: List[Dict[str, Any]]) -> Lis
     notes_text = "\n\n".join(sample_notes)
 
     system = (
-        "你是一个有用的助手，负责从给定的用户描述和示例笔记中提取精简的用户画像（user_style）和内容主题（content_topic）。"
-        "请严格返回一个包含两个键的 JSON 对象：\"user_style\" 与 \"content_topic\"。"
+        "你是一个有用的助手，负责从给定的用户描述和示例笔记中提取精简的用户画像（user_style）、内容主题（content_topic）和内容分类（categories）。"
+        "请严格返回一个包含三个键的 JSON 对象：\"user_style\"、\"content_topic\" 和 \"categories\"。"
         "\n- \"user_style\" 应为一个对象，包含字段：\"persona\"（1-2 句的简短描述）、\"tone\"（描述写作/视频语气的词语）、"
-        "以及 \"interests\"（列出主要兴趣关键词）。\n- \"content_topic\" 应为一个列表，包含总结性的话题关键词或短语。\n"
+        "以及 \"interests\"（列出主要兴趣关键词）。"
+        "\n- \"content_topic\" 应为一个列表，包含总结性的话题关键词或短语。"
+        "\n- \"categories\" 应为一个列表，包含1-3个最匹配的类别，从以下选项中选择：Lifestyle（生活方式）、Fashion（时尚）、Food（美食）、"
+        "Fitness（健身）、Tech（科技）、Wellness（身心健康）、Finance（财经）。\n"
     )
 
     user_msg = (
         f"用户描述:\n{user_desc}\n\n示例笔记（title/desc/tags）：\n{notes_text}\n\n"
         "请仅输出 JSON 对象。示例格式：\n"
-        "{\"user_style\": {\"persona\": \"...\", \"tone\": \"...\", \"interests\": [\"...\"]}, \"content_topic\": [\"topic1\", \"topic2\"]}"
+        "{\"user_style\": {\"persona\": \"...\", \"tone\": \"...\", \"interests\": [\"...\"]}, "
+        "\"content_topic\": [\"topic1\", \"topic2\"], "
+        "\"categories\": [\"Lifestyle\", \"Food\"]}"
     )
 
     return [{"role": "system", "content": system}, {"role": "user", "content": user_msg}]
@@ -321,6 +326,7 @@ def analyze_user_profile(user_info: Dict[str, Any], notes: List[Dict[str, Any]],
         },
         "content_topics": profile.get("content_topic", []),
         "content_style": [],
+        "categories": profile.get("categories", ["Lifestyle"]),  # Extract categories from GPT response
         "audience": [],
         "value_points": [],
         "content_clusters": []

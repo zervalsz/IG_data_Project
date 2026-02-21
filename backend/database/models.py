@@ -25,6 +25,7 @@ class UserProfileData(BaseModel):
     content_style: str = Field(default="", description="内容风格")
     value_points: List[str] = Field(default_factory=list, description="价值点")
     engagement: Dict[str, Any] = Field(default_factory=dict, description="互动数据")
+    categories: List[str] = Field(default_factory=list, description="内容分类: Lifestyle, Fashion, Food, Fitness, Tech, Wellness, Finance")
 
 
 class UserProfile(BaseModel):
@@ -90,6 +91,7 @@ class PostEmbedding(BaseModel):
     platform: PlatformType
     embedding: List[float]  # 多模态向量
     caption: str = ""
+    categories: List[str] = Field(default_factory=list, description="从用户继承的分类")
     objects: List[str] = Field(default_factory=list)
     ocr_text: List[str] = Field(default_factory=list)
     like_count: int = 0

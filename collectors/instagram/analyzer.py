@@ -107,6 +107,8 @@ Please provide analysis in JSON format with the following structure:
         "interests": ["interest1", "interest2", "interest3"]
     }},
     "content_topics": ["topic1", "topic2", "topic3"],
+    "primary_category": "PrimaryCategory",
+    "categories": ["PrimaryCategory", "SecondaryCategory"],
     "posting_pattern": {{
         "frequency": "daily/weekly/monthly/irregular",
         "best_time_to_post": "estimated best posting time",
@@ -116,6 +118,24 @@ Please provide analysis in JSON format with the following structure:
     "engagement_style": "description of how they engage with followers",
     "brand_fit": ["brand_type1", "brand_type2"]
 }}
+
+CATEGORY RULES:
+1. "primary_category": Choose the ONE category that best represents this creator's main focus
+2. "categories": Array with primary category first, then optionally ONE secondary category if they regularly post about it (must be 20%+ of content)
+
+Available categories:
+- Finance (money, investing, budgeting, wealth building, financial education)
+- Food (cooking, recipes, meals, restaurants, culinary content)
+- Fitness (workout routines, sports, exercise, physical training)
+- Fashion (style, outfits, clothing, beauty, trends)
+- Tech (technology, software, digital tools, AI, gadgets)
+- Wellness (mental health professionals, therapists, mindfulness coaches, psychology)
+- Lifestyle (daily vlogs, general entertainment, life moments - use ONLY if no other category fits)
+
+IMPORTANT: 
+- Be STRICT with category assignment. Only assign Wellness if they are mental health professionals.
+- Lifestyle is a catch-all - only use if content doesn't fit other categories.
+- Most creators should have only 1 category. Add secondary ONLY if truly significant.
 
 Return ONLY valid JSON, no additional text."""
         

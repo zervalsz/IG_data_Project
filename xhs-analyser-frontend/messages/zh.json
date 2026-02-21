@@ -3,11 +3,11 @@
     "followers": "粉丝数"
   },
   "header": {
-    "brand": "小红书创作者助手",
+    "brand": "Instagram 创作者内容实验室",
     "nav": {
-      "overview": "关系网络",
-      "trending": "流量密码",
-      "growth": "成长路径"
+      "styleGenerator": "风格生成器",
+      "trendGenerator": "趋势生成器",
+      "creators": "探索创作者"
     }
   },
   "languageSwitcher": {

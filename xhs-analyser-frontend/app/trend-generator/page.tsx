@@ -22,37 +22,51 @@ export default function TrendGeneratorPage() {
   const [categories] = useState<Category[]>([
     {
       id: 'finance',
-      name: 'Finance & Money',
+      name: 'Finance',
       icon: '💰',
       color: 'from-green-400 to-emerald-600',
       creators: []
     },
     {
-      id: 'wellness',
-      name: 'Mental Health & Wellness',
-      icon: '🧘',
-      color: 'from-blue-400 to-cyan-600',
-      creators: []
-    },
-    {
       id: 'food',
-      name: 'Food & Cooking',
+      name: 'Food',
       icon: '🍳',
       color: 'from-orange-400 to-red-600',
       creators: []
     },
     {
       id: 'fitness',
-      name: 'Fitness & Sports',
+      name: 'Fitness',
       icon: '💪',
       color: 'from-purple-400 to-pink-600',
       creators: []
     },
     {
+      id: 'fashion',
+      name: 'Fashion',
+      icon: '👗',
+      color: 'from-rose-400 to-pink-600',
+      creators: []
+    },
+    {
+      id: 'tech',
+      name: 'Tech',
+      icon: '💻',
+      color: 'from-indigo-400 to-blue-600',
+      creators: []
+    },
+    {
+      id: 'wellness',
+      name: 'Wellness',
+      icon: '🧘',
+      color: 'from-blue-400 to-cyan-600',
+      creators: []
+    },
+    {
       id: 'lifestyle',
-      name: 'Lifestyle & Entertainment',
+      name: 'Lifestyle',
       icon: '✨',
-      color: 'from-pink-400 to-rose-600',
+      color: 'from-pink-400 to-teal-600',
       creators: []
     }
   ]);
@@ -62,6 +76,12 @@ export default function TrendGeneratorPage() {
   const [result, setResult] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [trendInsights, setTrendInsights] = useState<any>(null);
+  const [evidence, setEvidence] = useState<any>(null);
+  
+  // Customization options
+  const [tone, setTone] = useState<string>("engaging");
+  const [length, setLength] = useState<string>("medium");
+  const [format, setFormat] = useState<string>("post");
 
   const handleGenerate = async () => {
     if (!selectedCategory) {
@@ -73,6 +93,7 @@ export default function TrendGeneratorPage() {
     setError('');
     setResult('');
     setTrendInsights(null);
+    setEvidence(null);
 
     try {
       // Use Next.js API proxy
@@ -83,7 +104,10 @@ export default function TrendGeneratorPage() {
         },
         body: JSON.stringify({
           category: selectedCategory,
-          platform: 'instagram'
+          platform: 'instagram',
+          tone,
+          length,
+          format
         }),
       });
 
@@ -95,6 +119,7 @@ export default function TrendGeneratorPage() {
       const data = await response.json();
       setResult(data.content || '');
       setTrendInsights(data.insights || null);
+      setEvidence(data.evidence || null);
     } catch (error) {
       console.error('Error generating content:', error);
       setError(error instanceof Error ? error.message : 'Failed to generate trend content. Please try again.');
@@ -168,6 +193,124 @@ export default function TrendGeneratorPage() {
                 </ul>
               </div>
             )}
+            
+            {/* Customization Options */}
+            {selectedCategory && (
+              <div className="space-y-4">
+                <h3 className="font-semibold text-gray-900">Customize Your Content</h3>
+                
+                {/* Tone */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tone</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => setTone("engaging")}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        tone === "engaging"
+                          ? "bg-pink-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      Engaging
+                    </button>
+                    <button
+                      onClick={() => setTone("professional")}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        tone === "professional"
+                          ? "bg-pink-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      Professional
+                    </button>
+                    <button
+                      onClick={() => setTone("casual")}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        tone === "casual"
+                          ? "bg-pink-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      Casual
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Length */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Length</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => setLength("short")}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        length === "short"
+                          ? "bg-pink-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      Short
+                    </button>
+                    <button
+                      onClick={() => setLength("medium")}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        length === "medium"
+                          ? "bg-pink-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      Medium
+                    </button>
+                    <button
+                      onClick={() => setLength("long")}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        length === "long"
+                          ? "bg-pink-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      Long
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Format */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Format</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => setFormat("post")}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        format === "post"
+                          ? "bg-pink-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      Post
+                    </button>
+                    <button
+                      onClick={() => setFormat("bullets")}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        format === "bullets"
+                          ? "bg-pink-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      Bullet Points
+                    </button>
+                    <button
+                      onClick={() => setFormat("script")}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        format === "script"
+                          ? "bg-pink-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      Script
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <button
               onClick={handleGenerate}
@@ -236,6 +379,64 @@ export default function TrendGeneratorPage() {
                         <div className="text-xs text-gray-600">Total Engagement</div>
                       </div>
                     </div>
+                  </div>
+                )}
+                
+                {/* Evidence Section */}
+                {evidence && (
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 mb-4">
+                    <h3 className="font-semibold text-indigo-900 mb-3">🔍 Evidence from Top Posts</h3>
+                    
+                    {/* Keywords */}
+                    {evidence.keywords && evidence.keywords.length > 0 && (
+                      <div className="mb-3">
+                        <h4 className="text-sm font-medium text-indigo-800 mb-2">Common Keywords:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {evidence.keywords.map((keyword: string, idx: number) => (
+                            <span key={idx} className="px-3 py-1 bg-white/70 rounded-full text-xs font-medium text-indigo-700">
+                              {keyword}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Hooks */}
+                    {evidence.hooks && evidence.hooks.length > 0 && (
+                      <div className="mb-3">
+                        <h4 className="text-sm font-medium text-indigo-800 mb-2">Successful Hooks:</h4>
+                        <div className="space-y-2">
+                          {evidence.hooks.slice(0, 3).map((hookData: any, idx: number) => {
+                            const hookText = typeof hookData === 'string' ? hookData : hookData.hook;
+                            const reason = typeof hookData === 'object' ? hookData.reason : '';
+                            return (
+                              <div key={idx} className="bg-white/70 rounded px-3 py-2.5">
+                                <div className="text-xs text-gray-700 mb-1">"{hookText}"</div>
+                                {reason && (
+                                  <div className="text-xs text-indigo-600 italic">
+                                    💡 {reason}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Hashtags */}
+                    {evidence.hashtags && evidence.hashtags.length > 0 && (
+                      <div className="mb-3">
+                        <h4 className="text-sm font-medium text-indigo-800 mb-2">Popular Hashtags:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {evidence.hashtags.slice(0, 10).map((tag: string, idx: number) => (
+                            <span key={idx} className="px-2 py-1 bg-indigo-100 rounded text-xs font-mono text-indigo-700">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

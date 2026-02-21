@@ -165,7 +165,10 @@ class StyleGenerationService:
         sample_notes: List[Dict[str, Any]],
         user_topic: str,
         creator_name: str,
-        platform: str = "xiaohongshu"
+        platform: str = "xiaohongshu",
+        tone: str = "engaging",
+        length: str = "medium",
+        format: str = "post"
     ) -> str:
         """
         构建风格生成提示词
@@ -175,6 +178,10 @@ class StyleGenerationService:
             sample_notes: 样本笔记
             user_topic: 用户输入的主题
             creator_name: 创作者昵称
+            platform: 平台
+            tone: 语气 (engaging/professional/casual)
+            length: 长度 (short/medium/long)
+            format: 格式 (post/bullets/script)
             
         Returns:
             完整的提示词
@@ -210,6 +217,75 @@ class StyleGenerationService:
                 user_topic=user_topic
             )
             
+            # Add customization instructions
+            tone_instructions = {
+                "engaging": """Use an ENGAGING, story-driven tone:
+                - Include emotion and personal connection
+                - Ask rhetorical questions to involve the reader
+                - Use 'you' and 'we' to create community
+                - Add excitement with varied sentence lengths
+                - Balance inspiration with authenticity
+                - Example: 'Ever felt like...? Here's what changed everything for me...'""",
+                
+                "professional": """Use a PROFESSIONAL, authoritative tone:
+                - Write with expertise and credibility
+                - Use industry terminology appropriately
+                - Reference data, research, or proven methods when relevant
+                - Avoid slang, excessive emojis, or casual phrases
+                - Maintain polished, articulate language
+                - Example: 'Research shows that... Industry experts recommend... The key factor is...'""",
+                
+                "casual": """Use a CASUAL, friend-to-friend tone:
+                - Write like you're texting your bestie
+                - Use contractions (you're, don't, can't)
+                - Include slang and colloquial expressions
+                - Keep it super relatable and laid-back
+                - Use lots of emojis naturally
+                - Example: 'Okay so like... ngl this totally changed my life... you're gonna love this...'"""
+            }
+            
+            length_instructions = {
+                "short": "Keep it brief and concise (50-100 words or 1-2 sentences).",
+                "medium": "Make it medium length (100-200 words or 2-4 paragraphs).",
+                "long": "Create a comprehensive post (200-400 words or 4-6 paragraphs)."
+            }
+            
+            format_instructions = {
+                "post": """Format as a NARRATIVE POST with natural flow and storytelling:
+                - Write in flowing paragraphs (not lists)
+                - Use conversational, story-like language
+                - Include natural transitions between ideas
+                - Add emojis throughout for engagement
+                - End with an inspiring closing line
+                - Put hashtags at the very end
+                Example structure: Opening hook → Personal story/insight → Key points woven into narrative → Closing thought → Hashtags""",
+                
+                "bullets": """Format as SCANNABLE BULLET POINTS for quick reading:
+                - Start with a brief intro line (1 sentence max)
+                - Use bullet points (• or numbered list) for each key point
+                - Each bullet should be concise and actionable
+                - Use emojis as bullet markers or at start of each point
+                - NO paragraph text - only lists
+                - End with hashtags
+                Example: Brief intro → • Point 1 → • Point 2 → • Point 3 → Hashtags""",
+                
+                "script": """Format as a CONTENT SCRIPT with clearly labeled sections:
+                - **HOOK:** (First 1-2 sentences to grab attention)
+                - **SETUP:** (Context or problem statement)
+                - **MAIN CONTENT:** (Key points, tips, or story)
+                - **CALL-TO-ACTION:** (What you want audience to do)
+                - **HASHTAGS:** (At the end)
+                Use clear section headers with asterisks or caps. This is for someone to read and recreate the content."""
+            }
+            
+            customization = f"""\n\nIMPORTANT CUSTOMIZATION:
+- Tone: {tone_instructions.get(tone, tone_instructions['engaging'])}
+- Length: {length_instructions.get(length, length_instructions['medium'])}
+- Format: {format_instructions.get(format, format_instructions['post'])}
+
+You MUST follow the format instructions exactly. The output should look visually different based on the format chosen."""
+            prompt += customization
+            
             return prompt
             
         except Exception as e:
@@ -220,7 +296,10 @@ class StyleGenerationService:
         self,
         creator_name: str,
         user_topic: str,
-        platform: str = "xiaohongshu"
+        platform: str = "xiaohongshu",
+        tone: str = "engaging",
+        length: str = "medium",
+        format: str = "post"
     ) -> Dict[str, Any]:
         """
         生成风格化内容
@@ -229,6 +308,9 @@ class StyleGenerationService:
             creator_name: 创作者昵称
             user_topic: 用户主题
             platform: 平台类型
+            tone: 语气
+            length: 长度
+            format: 格式
             
         Returns:
             生成结果 {"success": bool, "content": str, "error": str}
@@ -260,7 +342,10 @@ class StyleGenerationService:
                 sample_notes,
                 user_topic,
                 creator_name,
-                platform
+                platform,
+                tone,
+                length,
+                format
             )
             
             # 4. 调用OpenAI API

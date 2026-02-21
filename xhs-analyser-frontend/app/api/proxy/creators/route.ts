@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   try {
     // Backend is always accessible from the server via localhost
-    const backendUrl = 'http://localhost:5001/api/style/creators?platform=instagram';
+    const backendUrl = 'http://localhost:8000/api/creators/list?platform=instagram';
     
     const response = await fetch(backendUrl);
     

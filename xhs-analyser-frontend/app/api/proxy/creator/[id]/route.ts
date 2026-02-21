@@ -10,7 +10,7 @@ export async function GET(
     console.log('[Proxy] Fetching creator profile for:', creatorId);
     
     // Backend is always accessible from the server via localhost
-    const backendUrl = `http://localhost:5001/api/creators/${creatorId}?platform=instagram`;
+    const backendUrl = `http://localhost:8000/api/creators/${creatorId}?platform=instagram`;
     console.log('[Proxy] Backend URL:', backendUrl);
     
     const response = await fetch(backendUrl);

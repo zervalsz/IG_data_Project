@@ -160,24 +160,43 @@ class UserProfileRepository(BaseRepository):
         Returns:
             粉丝数 or None
         """
-        # Query raw_api_responses for user_info endpoint
+        # Query raw_api_responses for user_info endpoint (get all, skip errors)
         raw_collection = self.db["raw_api_responses"]
-        doc = raw_collection.find_one({
+        docs = raw_collection.find({
             "platform": platform,
             "username": user_id,
             "endpoint": {"$regex": "user_info", "$options": "i"}
         })
         
-        if doc and "raw" in doc:
+        for doc in docs:
+            if not doc or "raw" not in doc:
+                continue
+                
             try:
-                # Navigate: raw.data.data.user.edge_followed_by.count
                 raw = doc["raw"]
                 data1 = raw.get("data", {})
-                data2 = data1.get("data", {})
-                user = data2.get("user", {})
-                edge_followed_by = user.get("edge_followed_by", {})
-                count = edge_followed_by.get("count", 0)
-                return count if count > 0 else None
+                
+                # Skip error responses
+                if "errorMessage" in data1:
+                    continue
+                
+                # Try nested structure first: raw.data.data.user
+                if "data" in data1:
+                    data2 = data1.get("data", {})
+                    user = data2.get("user", {})
+                    if user:
+                        edge_followed_by = user.get("edge_followed_by", {})
+                        count = edge_followed_by.get("count", 0)
+                        if count > 0:
+                            return count
+                
+                # Try direct structure: raw.data.user
+                user = data1.get("user", {})
+                if user:
+                    edge_followed_by = user.get("edge_followed_by", {})
+                    count = edge_followed_by.get("count", 0)
+                    if count > 0:
+                        return count
             except (KeyError, TypeError, AttributeError):
                 return None
         

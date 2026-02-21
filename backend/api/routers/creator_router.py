@@ -43,12 +43,13 @@ async def get_creator_network(platform: str = "xiaohongshu") -> Dict[str, Any]:
 
 
 @router.get("/list")
-async def list_all_creators(platform: Optional[str] = None):
+async def list_all_creators(platform: Optional[str] = None, category: Optional[str] = None):
     """
     获取所有创作者列表
     
     Args:
         platform: 平台类型，不指定则返回所有平台
+        category: 类别筛选
         
     Returns:
         创作者列表
@@ -59,12 +60,25 @@ async def list_all_creators(platform: Optional[str] = None):
         
         creators = []
         for profile in profiles:
+            profile_data = profile.get("profile_data", {})
+            stored_categories = profile_data.get("categories", [])
+            primary_category = profile_data.get("primary_category", stored_categories[0] if stored_categories else "Lifestyle")
+            
+            # Filter by category if specified (check primary category)
+            if category:
+                if primary_category.lower() != category.lower():
+                    continue
+            
             creators.append({
                 "user_id": profile.get("user_id", ""),
-                "nickname": profile.get("nickname", ""),
+                "nickname": profile_data.get("nickname", ""),
                 "platform": profile.get("platform", ""),
-                "topics": profile.get("profile_data", {}).get("topics", []),
-                "content_style": profile.get("profile_data", {}).get("content_style", "")
+                "topics": profile_data.get("content_topics", []),
+                "content_style": profile_data.get("user_style", {}).get("persona", ""),
+                "primary_category": primary_category,  # For UI display
+                "categories": stored_categories,  # For post-level categorization
+                "bio": profile_data.get("bio", ""),
+                "interests": profile_data.get("user_style", {}).get("interests", [])
             })
         
         return {"creators": creators, "total": len(creators)}

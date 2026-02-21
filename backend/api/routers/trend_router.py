@@ -13,8 +13,11 @@ router = APIRouter(prefix="/api/trend")
 
 class TrendGenerateRequest(BaseModel):
     """趋势生成请求"""
-    category: str = Field(..., description="类别: finance, wellness, food, fitness, lifestyle")
+    category: str = Field(..., description="类别: Lifestyle, Fashion, Food, Fitness, Tech, Wellness, Finance")
     platform: str = Field(default="instagram", description="平台")
+    tone: Optional[str] = Field(default="engaging", description="语气: engaging, professional, casual")
+    length: Optional[str] = Field(default="medium", description="长度: short, medium, long")
+    format: Optional[str] = Field(default="post", description="格式: post, bullets, script")
 
 
 class TrendGenerateResponse(BaseModel):
@@ -22,6 +25,7 @@ class TrendGenerateResponse(BaseModel):
     success: bool
     content: str
     insights: Optional[Dict[str, Any]] = None
+    evidence: Optional[Dict[str, Any]] = None
     category: str
     creators_analyzed: int = 0
     posts_analyzed: int = 0
@@ -41,7 +45,10 @@ async def generate_trend_content(request: TrendGenerateRequest):
         service = TrendService()
         result = await service.generate_trend_content(
             category=request.category,
-            platform=request.platform
+            platform=request.platform,
+            tone=request.tone,
+            length=request.length,
+            format=request.format
         )
         
         return TrendGenerateResponse(**result)

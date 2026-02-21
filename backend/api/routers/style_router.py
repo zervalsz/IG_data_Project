@@ -31,6 +31,9 @@ class GenerateRequest(BaseModel):
     creator_name: str
     user_input: str  # 改为user_input以匹配前端
     platform: str = "xiaohongshu"  # 可选字段，默认小红书
+    tone: str = "engaging"  # 语气选项
+    length: str = "medium"  # 长度选项
+    format: str = "post"  # 格式选项
 
 
 class GenerateResponse(BaseModel):
@@ -98,7 +101,7 @@ async def generate_style_content(request: GenerateRequest):
     生成风格化内容
     
     Args:
-        request: 生成请求（创作者名称、主题、平台）
+        request: 生成请求（创作者名称、主题、平台、语气、长度、格式）
         
     Returns:
         生成结果
@@ -108,7 +111,10 @@ async def generate_style_content(request: GenerateRequest):
         result = service.generate_content(
             creator_name=request.creator_name,
             user_topic=request.user_input,  # 使用user_input字段
-            platform=request.platform
+            platform=request.platform,
+            tone=request.tone,
+            length=request.length,
+            format=request.format
         )
         return result
     except Exception as e:

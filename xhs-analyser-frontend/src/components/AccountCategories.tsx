@@ -82,57 +82,95 @@ export function AccountCategories() {
     const categoryMap: Record<string, Category> = {
       finance: {
         id: 'finance',
-        name: 'Finance & Money',
+        name: 'Finance',
         icon: '💰',
         color: 'from-green-400 to-emerald-600',
         creators: []
       },
-      wellness: {
-        id: 'wellness',
-        name: 'Mental Health & Wellness',
-        icon: '🧘',
-        color: 'from-blue-400 to-cyan-600',
-        creators: []
-      },
       food: {
         id: 'food',
-        name: 'Food & Cooking',
+        name: 'Food',
         icon: '🍳',
         color: 'from-orange-400 to-red-600',
         creators: []
       },
       fitness: {
         id: 'fitness',
-        name: 'Fitness & Sports',
+        name: 'Fitness',
         icon: '💪',
         color: 'from-purple-400 to-pink-600',
         creators: []
       },
+      fashion: {
+        id: 'fashion',
+        name: 'Fashion',
+        icon: '👗',
+        color: 'from-rose-400 to-pink-600',
+        creators: []
+      },
+      tech: {
+        id: 'tech',
+        name: 'Tech',
+        icon: '💻',
+        color: 'from-indigo-400 to-blue-600',
+        creators: []
+      },
+      wellness: {
+        id: 'wellness',
+        name: 'Wellness',
+        icon: '🧘',
+        color: 'from-blue-400 to-cyan-600',
+        creators: []
+      },
       lifestyle: {
         id: 'lifestyle',
-        name: 'Lifestyle & Entertainment',
+        name: 'Lifestyle',
         icon: '✨',
-        color: 'from-pink-400 to-rose-600',
+        color: 'from-pink-400 to-teal-600',
         creators: []
       }
     };
 
     creators.forEach(creator => {
-      const interests = creator.profile_data?.user_style?.interests || [];
-      const topics = creator.profile_data?.content_topics || [];
-      const allText = [...interests, ...topics].join(' ').toLowerCase();
-
-      // Categorize based on keywords
-      if (allText.includes('finance') || allText.includes('invest') || allText.includes('money') || allText.includes('debt')) {
-        categoryMap.finance.creators.push(creator);
-      } else if (allText.includes('mental') || allText.includes('wellness') || allText.includes('psychology') || allText.includes('trauma') || allText.includes('health')) {
-        categoryMap.wellness.creators.push(creator);
-      } else if (allText.includes('food') || allText.includes('cook') || allText.includes('recipe')) {
-        categoryMap.food.creators.push(creator);
-      } else if (allText.includes('fitness') || allText.includes('workout') || allText.includes('sport')) {
-        categoryMap.fitness.creators.push(creator);
+      // Use primary_category from backend (single category for UI display)
+      const primaryCategory = (creator as any).primary_category;
+      
+      if (primaryCategory) {
+        // Use GPT-assigned primary category
+        const catLower = primaryCategory.toLowerCase();
+        if (categoryMap[catLower]) {
+          categoryMap[catLower].creators.push(creator);
+        }
       } else {
-        categoryMap.lifestyle.creators.push(creator);
+        // Fallback: try categories array if no primary_category
+        const storedCategories = (creator as any).categories || [];
+        if (storedCategories.length > 0) {
+          const catLower = storedCategories[0].toLowerCase();
+          if (categoryMap[catLower]) {
+            categoryMap[catLower].creators.push(creator);
+          }
+        } else {
+          // Final fallback to keyword matching
+          const interests = creator.profile_data?.user_style?.interests || [];
+          const topics = creator.profile_data?.content_topics || [];
+          const allText = [...interests, ...topics].join(' ').toLowerCase();
+
+          if (allText.includes('finance') || allText.includes('invest') || allText.includes('money')) {
+            categoryMap.finance.creators.push(creator);
+          } else if (allText.includes('wellness') || allText.includes('psychology') || allText.includes('mental')) {
+            categoryMap.wellness.creators.push(creator);
+          } else if (allText.includes('food') || allText.includes('cook')) {
+            categoryMap.food.creators.push(creator);
+          } else if (allText.includes('fitness') || allText.includes('workout')) {
+            categoryMap.fitness.creators.push(creator);
+          } else if (allText.includes('tech') || allText.includes('technology')) {
+            categoryMap.tech.creators.push(creator);
+          } else if (allText.includes('fashion') || allText.includes('beauty')) {
+            categoryMap.fashion.creators.push(creator);
+          } else {
+            categoryMap.lifestyle.creators.push(creator);
+          }
+        }
       }
     });
 

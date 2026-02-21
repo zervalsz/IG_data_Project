@@ -12,9 +12,9 @@ export function Header({ currentLocale }: HeaderProps) {
   const t = useTranslations("header");
 
   const navItems = [
-    { href: "/", label: t("nav.overview") },
-    { href: "/#trending", label: t("nav.trending") },
-    { href: "/#growth", label: t("nav.growth") },
+    { href: "/style-generator", label: t("nav.styleGenerator") },
+    { href: "/trend-generator", label: t("nav.trendGenerator") },
+    { href: "/#creators", label: t("nav.creators") },
   ];
 
   return (

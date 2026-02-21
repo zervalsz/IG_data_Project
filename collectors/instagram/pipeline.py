@@ -11,6 +11,7 @@ import argparse
 from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
+import numpy as np
 # Try to import FlagEmbedding; if unavailable, proceed without local embeddings
 try:
     from FlagEmbedding import FlagModel
@@ -36,7 +37,7 @@ elif local_env.exists():
 elif backend_env.exists():
     load_dotenv(backend_env)
 
-from database import UserSnapshotRepository, UserProfileRepository, UserEmbeddingRepository
+from database import UserSnapshotRepository, UserProfileRepository, UserEmbeddingRepository, PostEmbeddingRepository
 
 # Import analyzer module
 sys.path.insert(0, str(Path(__file__).parent))
@@ -193,6 +194,89 @@ def process_instagram_user(user_id: str, embedding_model: FlagModel = None):
         else:
             embedding_repo.create_embedding(embedding_doc)
             print(f"✅ Created user_embeddings")
+    
+    # 4. Process individual post embeddings
+    print(f"\n📝 Step 4: Processing individual post embeddings...")
+    categories = profile_data.get('categories', ['Lifestyle'])
+    print(f"   - Categories: {', '.join(categories)}")
+    
+    post_repo = PostEmbeddingRepository()
+    embedded_count = 0
+    skipped_count = 0
+    
+    for post in posts:
+        post_id = post.get('id', post.get('post_id', ''))
+        if not post_id:
+            skipped_count += 1
+            continue
+        
+        # Check if already exists
+        existing_post = post_repo.get_by_post_id(post_id, platform='instagram')
+        if existing_post:
+            skipped_count += 1
+            continue
+        
+        # Build post text - extract text from caption dict
+        caption_raw = post.get('caption', '')
+        
+        # Caption is often a dict with 'text' field - extract it
+        if isinstance(caption_raw, dict):
+            caption = caption_raw.get('text', '')
+        elif isinstance(caption_raw, str):
+            caption = caption_raw
+        else:
+            caption = str(caption_raw) if caption_raw else ''
+        
+        hashtags = post.get('hashtags', [])
+        if isinstance(hashtags, list):
+            hashtags_text = ' '.join(hashtags)
+        else:
+            hashtags_text = str(hashtags)
+        
+        post_text = f"{caption} {hashtags_text}".strip()
+        
+        if not post_text:
+            skipped_count += 1
+            continue
+        
+        # Generate embedding if model available
+        if embedding_model:
+            try:
+                post_embedding = embedding_model.encode([post_text])
+                if hasattr(post_embedding, 'tolist'):
+                    emb = post_embedding.tolist()[0] if isinstance(post_embedding.tolist(), list) and len(post_embedding.tolist()) > 0 else post_embedding.tolist()
+                else:
+                    emb = np.array(post_embedding).tolist()
+                    if isinstance(emb, list) and len(emb) > 0 and isinstance(emb[0], list):
+                        emb = emb[0]
+            except Exception as e:
+                print(f"⚠️  Failed to embed post {post_id}: {e}")
+                skipped_count += 1
+                continue
+        else:
+            skipped_count += 1
+            continue
+        
+        # Create post_embedding document
+        post_doc = {
+            'post_id': post_id,
+            'user_id': user_id,
+            'username': username,
+            'platform': 'instagram',
+            'embedding': emb,
+            'caption': caption,
+            'categories': categories,  # Inherit from user profile
+            'like_count': post.get('likes', 0),
+            'comment_count': post.get('comments', 0),
+            'model': os.environ.get('EMBEDDING_MODEL', 'BAAI/bge-small-en-v1.5'),
+            'dimension': len(emb),
+            'created_at': datetime.now()
+        }
+        
+        post_repo.create_embedding(post_doc)
+        embedded_count += 1
+    
+    print(f"✅ Post embeddings complete: {embedded_count} new, {skipped_count} skipped")
     
     print(f"\n✨ User {username} processing complete!")
     return True

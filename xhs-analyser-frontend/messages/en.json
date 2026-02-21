@@ -3,11 +3,11 @@
     "followers": "Followers"
   },
   "header": {
-    "brand": "XHS Creator Studio",
+    "brand": "Instagram Creator Content Lab",
     "nav": {
-      "overview": "Network",
-      "trending": "Hot Topics",
-      "growth": "Growth Path"
+      "styleGenerator": "Style Generator",
+      "trendGenerator": "Trend Generator",
+      "creators": "Explore Creators"
     }
   },
   "languageSwitcher": {

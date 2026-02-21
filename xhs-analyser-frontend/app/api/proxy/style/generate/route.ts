@@ -5,7 +5,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     
     // Backend is always accessible from the server via localhost
-    const backendUrl = 'http://localhost:5001/api/style/generate';
+    const backendUrl = 'http://localhost:8000/api/style/generate';
     
     const response = await fetch(backendUrl, {
       method: 'POST',

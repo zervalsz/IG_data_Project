@@ -23,6 +23,11 @@ export default function StyleGeneratorPage() {
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<string>("");
   const [error, setError] = useState<string>("");
+  
+  // Customization options
+  const [tone, setTone] = useState<string>("engaging");
+  const [length, setLength] = useState<string>("medium");
+  const [format, setFormat] = useState<string>("post");
 
   useEffect(() => {
     fetchCreators();
@@ -62,7 +67,10 @@ export default function StyleGeneratorPage() {
         body: JSON.stringify({
           creator_name: selectedCreator,
           user_input: topic,
-          platform: 'instagram'
+          platform: 'instagram',
+          tone,
+          length,
+          format
         }),
       });
 
@@ -159,6 +167,122 @@ export default function StyleGeneratorPage() {
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
               />
+            </div>
+            
+            {/* Customization Options */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-gray-900">Customize Output</h3>
+              
+              {/* Tone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tone</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setTone("engaging")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      tone === "engaging"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Engaging
+                  </button>
+                  <button
+                    onClick={() => setTone("professional")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      tone === "professional"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Professional
+                  </button>
+                  <button
+                    onClick={() => setTone("casual")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      tone === "casual"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Casual
+                  </button>
+                </div>
+              </div>
+              
+              {/* Length */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Length</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setLength("short")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      length === "short"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Short
+                  </button>
+                  <button
+                    onClick={() => setLength("medium")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      length === "medium"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Medium
+                  </button>
+                  <button
+                    onClick={() => setLength("long")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      length === "long"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Long
+                  </button>
+                </div>
+              </div>
+              
+              {/* Format */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Format</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setFormat("post")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      format === "post"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Post
+                  </button>
+                  <button
+                    onClick={() => setFormat("bullets")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      format === "bullets"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Bullet Points
+                  </button>
+                  <button
+                    onClick={() => setFormat("script")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      format === "script"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Script
+                  </button>
+                </div>
+              </div>
             </div>
 
             <button
