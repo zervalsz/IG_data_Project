@@ -25,19 +25,20 @@ backend/
 ├── api/
 │   ├── server.py              # FastAPI app entry point
 │   ├── routers/               # API endpoints
-│   │   ├── creator_router.py  # /api/creators/*
-│   │   ├── style_router.py    # /api/style/*
-│   │   └── trend_router.py    # /api/trend/*
+│   │   ├── creator_router.py  # /api/creators/* (list, network, details)
+│   │   ├── instagram_router.py # /api/instagram/* (fetch, health)
+│   │   ├── style_router.py    # /api/style/* (content in creator style)
+│   │   └── trend_router.py    # /api/trend/* (trend-based content)
 │   └── services/              # Business logic
 │       ├── style_service.py   # Content generation in creator style
 │       └── trend_service.py   # Trend-based content generation
-├── database/
-│   ├── connection.py          # MongoDB connection
-│   ├── models.py              # Data models
-│   └── repositories.py        # Database operations
-└── data/
-    └── creators_data.json     # Creator network data (generated)
+└── database/
+    ├── connection.py          # MongoDB connection
+    ├── models.py              # Data models
+    └── repositories.py        # Database operations (Repository Pattern)
 ```
+
+**Note:** Data collection, embedding generation, and analysis happen in the `collectors/instagram/` folder (outside backend). This backend is a pure API layer that serves pre-processed data from MongoDB.
 
 ---
 
