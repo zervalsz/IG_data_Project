@@ -1,8 +1,0 @@
-# TikHub 数据采集工具依赖
-# 可以独立安装，也可以使用 data-analysiter 的虚拟环境
-
-requests>=2.31.0
-pymongo>=4.6.0
-
-# 可选：如果需要独立测试
-python-dotenv>=1.0.0
