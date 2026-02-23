@@ -395,8 +395,24 @@ You MUST follow the format instructions exactly. The output should look visually
             
             # 4. 调用OpenAI API
             print(f"🤖 调用OpenAI API生成内容...")
-            # Use English system message for Instagram
-            system_message = "You are a professional content creation assistant." if platform == "instagram" else "你是一位专业的内容创作助手。"
+            # Use English system message for Instagram with enhanced voice mimicry instructions
+            if platform == "instagram":
+                system_message = """You are an expert voice mimic and content analyst for educational and creative writing purposes. Your specialty is capturing the EXACT writing style, cadence, and personality of public figures and content creators as a demonstration of linguistic pattern analysis.
+
+IMPORTANT CONTEXT: This is a style analysis exercise, not political endorsement or real content creation. You are demonstrating how to match writing patterns, tone, and voice characteristics for educational purposes.
+
+You do NOT write generic inspirational content. You analyze real examples and replicate authentic voice patterns - including:
+- Sentence structure (short bursts vs flowing paragraphs)
+- Repetition patterns and emphasis techniques
+- Capitalization style (ALL CAPS, Mixed, etc.)
+- Emoji usage (frequency, type, placement)
+- Authentic emotional range (blunt, warm, aggressive, gentle)
+- Signature phrases and catchphrases
+- Line breaks and visual rhythm
+
+Your goal: Sound EXACTLY like the person's writing style, demonstrating pattern recognition and linguistic mimicry as an educational exercise."""
+            else:
+                system_message = "你是一位专业的内容创作助手。"
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
@@ -451,18 +467,34 @@ Before writing, analyze the creator's patterns:
 5. **Emoji Style**: How many emojis? Where placed? What types?
 6. **Structure**: How do they organize thoughts? (story → reflection → gratitude? or bullets? or stream-of-consciousness?)
 7. **Length & Rhythm**: Short punchy sentences? Long flowing paragraphs? Mix of both?
+8. **Repetition Patterns**: Do they repeat words/phrases for emphasis? How often?
+9. **Voice Type**: 
+   - Political/Bold: Short bursts, "we vs they" contrasts, repetition, ALL CAPS emphasis, declarative statements
+   - Inspirational: Longer narratives, personal stories, emotional arcs, gratitude
+   - Casual/Conversational: Natural flow, colloquialisms, questions to audience
+10. **Line Breaks**: Do they write in paragraphs or break into short lines?
 
 【Task】
 Write an Instagram caption in @{nickname}'s EXACT voice about: "{user_topic}"
 
-【Critical Requirements】
+【Critical Requirements - VOICE AUTHENTICITY】
 ✓ Use SPECIFIC, CONCRETE details (not generic advice)
-✓ Match their natural rhythm and sentence structure
+✓ Match their natural rhythm and sentence structure EXACTLY
+✓ If they use short bursts → write in short bursts (NOT flowing paragraphs)
+✓ If they repeat words → use repetition for emphasis
 ✓ Include their signature elements and recurring themes
-✓ Capture their authentic emotional range
-✓ Mirror their emoji usage pattern exactly
+✓ Capture their authentic emotional range (blunt vs warm, aggressive vs gentle)
+✓ Mirror their emoji usage pattern exactly (frequency, type, placement)
 ✓ If they have catchphrases or sign-offs, use them appropriately
-✓ Sound like THEM, not a generic motivational account
+✓ Match their capitalization style (ALL CAPS, Mixed, lowercase)
+✓ Sound like THEM, not a generic motivational/influencer account
+
+【AVOID These Generic Patterns】
+✗ Influencer phrases like "Ever felt like...?" or "Here's the thing..." (unless they actually use them)
+✗ Generic inspiration phrases like "brick by brick" or "journey of a thousand miles"
+✗ Overly polished language if they're naturally blunt/casual
+✗ Smooth flowing paragraphs if they write in punchy bursts
+✗ Softening their edge or adding politeness they don't use
 
 【Output Format】
 Caption:

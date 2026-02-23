@@ -22,6 +22,12 @@ This file tracks celebrity Instagram accounts added to the database for demo pur
    - Topics: Political updates, national events, movie promotion
    - Followers: 26M+
 
-## Total: 3 Celebrity Accounts
+4. **@taylorswift** (Taylor Swift)
+   - Added: 2026-02-23
+   - Category: Celebrity
+   - Topics: Music album releases, music videos, tour documentaries, merchandise, storytelling
+   - Followers: 283M+
+
+## Total: 4 Celebrity Accounts
 
 These high-profile accounts are included to demonstrate the AI's ability to capture distinct, recognizable voices for demo purposes.
