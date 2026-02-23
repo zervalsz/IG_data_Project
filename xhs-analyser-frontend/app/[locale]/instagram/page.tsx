@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { InstagramCreatorsList } from "@/components/InstagramCreatorsList";
 
 export default function InstagramPage() {

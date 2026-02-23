@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 interface Creator {
   user_id: string;
@@ -17,6 +18,9 @@ interface Creator {
 }
 
 export default function StyleGeneratorPage() {
+  const searchParams = useSearchParams();
+  const creatorParam = searchParams.get('creator');
+  
   const [creators, setCreators] = useState<Creator[]>([]);
   const [selectedCreator, setSelectedCreator] = useState<string>("");
   const [topic, setTopic] = useState("");
@@ -32,6 +36,16 @@ export default function StyleGeneratorPage() {
   useEffect(() => {
     fetchCreators();
   }, []);
+
+  // Set selected creator from URL parameter after creators are loaded
+  useEffect(() => {
+    if (creatorParam && creators.length > 0) {
+      const creatorExists = creators.some(c => c.user_id === creatorParam);
+      if (creatorExists) {
+        setSelectedCreator(creatorParam);
+      }
+    }
+  }, [creatorParam, creators]);
 
   const fetchCreators = async () => {
     try {

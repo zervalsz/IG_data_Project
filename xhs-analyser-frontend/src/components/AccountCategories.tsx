@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { Link } from "@/navigation";
 
 interface Creator {
   user_id: string;
@@ -297,7 +297,7 @@ export function AccountCategories() {
 
                     <div className="flex gap-2 mt-4">
                       <Link
-                        href={`/creator/${creator.user_id}`}
+                        href={`/instagram/${creator.user_id}`}
                         className="flex-1 text-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
                       >
                         View Profile
