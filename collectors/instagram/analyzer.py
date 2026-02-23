@@ -130,10 +130,12 @@ Available categories:
 - Fashion (style, outfits, clothing, beauty, trends)
 - Tech (technology, software, digital tools, AI, gadgets)
 - Wellness (mental health professionals, therapists, mindfulness coaches, psychology)
+- Celebrity (famous public figures, actors, athletes, musicians, highly influential personalities with millions of followers)
 - Lifestyle (daily vlogs, general entertainment, life moments - use ONLY if no other category fits)
 
 IMPORTANT: 
 - Be STRICT with category assignment. Only assign Wellness if they are mental health professionals.
+- Use Celebrity for well-known public figures, entertainers, or highly influential personalities.
 - Lifestyle is a catch-all - only use if content doesn't fit other categories.
 - Most creators should have only 1 category. Add secondary ONLY if truly significant.
 
