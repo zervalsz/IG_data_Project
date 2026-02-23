@@ -128,6 +128,13 @@ export function AccountCategories() {
         icon: '✨',
         color: 'from-pink-400 to-teal-600',
         creators: []
+      },
+      celebrity: {
+        id: 'celebrity',
+        name: 'Celebrity',
+        icon: '⭐',
+        color: 'from-yellow-400 to-orange-600',
+        creators: []
       }
     };
 
@@ -167,6 +174,8 @@ export function AccountCategories() {
             categoryMap.tech.creators.push(creator);
           } else if (allText.includes('fashion') || allText.includes('beauty')) {
             categoryMap.fashion.creators.push(creator);
+          } else if (allText.includes('celebrity') || allText.includes('famous') || allText.includes('public figure')) {
+            categoryMap.celebrity.creators.push(creator);
           } else {
             categoryMap.lifestyle.creators.push(creator);
           }

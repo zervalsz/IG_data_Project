@@ -23,6 +23,7 @@ class TrendService:
         'Fitness': ['fitness', 'workout', 'sport', 'exercise', 'training'],
         'Fashion': ['fashion', 'style', 'outfit', 'clothing', 'trend'],
         'Tech': ['tech', 'technology', 'software', 'coding', 'ai', 'digital'],
+        'Celebrity': ['celebrity', 'famous', 'public figure', 'influencer', 'star'],
         'Lifestyle': []  # catch-all for others
     }
     
@@ -76,7 +77,7 @@ class TrendService:
         获取指定类别的创作者（使用primary_category字段）
         
         Args:
-            category: 类别名称 (Lifestyle, Fashion, Food, Fitness, Tech, Wellness, Finance)
+            category: 类别名称 (Lifestyle, Fashion, Food, Fitness, Tech, Wellness, Finance, Celebrity)
             platform: 平台
             
         Returns:
@@ -405,6 +406,7 @@ Keep explanations concise and actionable."""
             'Fitness': 'Fitness & Sports',
             'Fashion': 'Fashion & Style',
             'Tech': 'Technology & Digital',
+            'Celebrity': 'Celebrity & Public Figures',
             'Lifestyle': 'Lifestyle & Entertainment'
         }
         
