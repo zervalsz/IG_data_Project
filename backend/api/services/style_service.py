@@ -151,12 +151,26 @@ class StyleGenerationService:
                 print(f"⚠️  创作者缺少user_id: {creator_name}")
                 return []
             
-            # 获取笔记
-            notes = self.snapshot_repo.get_notes(user_id, platform, limit)
-            return notes
+            # 获取笔记/帖子
+            if platform == "instagram":
+                # For Instagram, get posts from user_snapshots
+                snapshot = self.snapshot_repo.get_by_user_id(user_id, platform)
+                if snapshot and 'posts' in snapshot:
+                    posts = snapshot['posts'][:limit]
+                    print(f"✅ 加载了 {len(posts)} 条Instagram帖子")
+                    return posts
+                else:
+                    print(f"⚠️  未找到Instagram帖子")
+                    return []
+            else:
+                # For XiaoHongShu, use existing notes method
+                notes = self.snapshot_repo.get_notes(user_id, platform, limit)
+                return notes
             
         except Exception as e:
             print(f"❌ 加载创作者笔记失败: {e}")
+            import traceback
+            traceback.print_exc()
             return []
     
     def build_style_prompt(
@@ -196,16 +210,47 @@ class StyleGenerationService:
                 template = prompt_data.get("template", self._get_default_template(platform))
             
             # 提取档案信息
-            topics = ", ".join(creator_profile.get("topics", []))
-            content_style = creator_profile.get("content_style", "")
+            topics = ", ".join(creator_profile.get("content_topics", creator_profile.get("topics", [])))
+            
+            # Get detailed style information
+            user_style = creator_profile.get("user_style", {})
+            persona = user_style.get("persona", "")
+            tone = user_style.get("tone", "")
+            interests = ", ".join(user_style.get("interests", []))
+            
+            # Combine style information
+            content_style = f"{persona}\n\nTone: {tone}\nInterests: {interests}" if persona else creator_profile.get("content_style", "")
+            
             value_points = "\n".join([f"- {vp}" for vp in creator_profile.get("value_points", [])])
             
             # 格式化样本笔记
             sample_notes_text = ""
-            for i, note in enumerate(sample_notes, 1):
-                title = note.get("title", "")
-                desc = note.get("desc", note.get("description", ""))
-                sample_notes_text += f"\n【笔记{i}】\n标题：{title}\n内容：{desc}\n"
+            if platform == "instagram":
+                # For Instagram, format as actual captions from posts
+                for i, note in enumerate(sample_notes, 1):
+                    # Instagram posts have 'caption' field which might be a dict with 'text'
+                    caption = ""
+                    if 'caption' in note:
+                        if isinstance(note['caption'], dict):
+                            caption = note['caption'].get('text', '')
+                        else:
+                            caption = note['caption']
+                    
+                    like_count = note.get('like_count', 0)
+                    if caption:
+                        # Show full caption (truncate if too long)
+                        display_caption = caption[:800] if len(caption) > 800 else caption
+                        sample_notes_text += f"\n--- Example Post {i} ({like_count:,} likes) ---\n{display_caption}\n"
+                
+                # If no captions found, add a note
+                if not sample_notes_text.strip():
+                    sample_notes_text = "\n(No sample posts available - rely on creator profile description)\n"
+            else:
+                # XiaoHongShu format
+                for i, note in enumerate(sample_notes, 1):
+                    title = note.get("title", "")
+                    desc = note.get("desc", note.get("description", ""))
+                    sample_notes_text += f"\n【笔记{i}】\n标题：{title}\n内容：{desc}\n"
             
             # 填充模板
             prompt = template.format(
@@ -384,31 +429,44 @@ You MUST follow the format instructions exactly. The output should look visually
     def _get_default_template(self, platform: str = "xiaohongshu") -> str:
         """获取默认提示词模板"""
         if platform == "instagram":
-            return """You are an experienced Instagram content creator who excels at mimicking different creator styles.
+            return """You are an expert at mimicking Instagram creator voices with precision.
 
 【Creator Profile】
-Username: {nickname}
+Username: @{nickname}
 Content Topics: {topics}
-Content Style: {content_style}
+Overall Style: {content_style}
 Key Values: {value_points}
 
-【Reference Posts】(Typical posts from this creator)
+【Actual Posts from @{nickname}】
+Study these REAL captions to understand their authentic voice:
+
 {sample_notes}
 
-【Task】
-Create an Instagram post in this creator's style about the topic: "{user_topic}"
+【Style Analysis Instructions】
+Before writing, analyze the creator's patterns:
+1. **Opening Hooks**: How do they start posts? (specific moments, people, places, or declarations)
+2. **Personal Details**: Do they reference specific times (4am), brands they own, family members, locations?
+3. **Emotional Range**: What emotions do they express? (gratitude, humor, vulnerability, motivation)
+4. **Signature Phrases**: Any catchphrases, sign-offs, or recurring words?
+5. **Emoji Style**: How many emojis? Where placed? What types?
+6. **Structure**: How do they organize thoughts? (story → reflection → gratitude? or bullets? or stream-of-consciousness?)
+7. **Length & Rhythm**: Short punchy sentences? Long flowing paragraphs? Mix of both?
 
-【Requirements】
-1. Writing style should closely match this creator's characteristics
-2. Maintain their typical expression and tone
-3. Reflect their values and content focus
-4. Create an engaging caption
-5. Add appropriate emojis for engagement
-6. Include 3-5 relevant hashtags at the end
+【Task】
+Write an Instagram caption in @{nickname}'s EXACT voice about: "{user_topic}"
+
+【Critical Requirements】
+✓ Use SPECIFIC, CONCRETE details (not generic advice)
+✓ Match their natural rhythm and sentence structure
+✓ Include their signature elements and recurring themes
+✓ Capture their authentic emotional range
+✓ Mirror their emoji usage pattern exactly
+✓ If they have catchphrases or sign-offs, use them appropriately
+✓ Sound like THEM, not a generic motivational account
 
 【Output Format】
 Caption:
-[Write the caption here]
+[Write the authentic caption here - make it sound like they actually wrote it]
 
 Hashtags:
 #hashtag1 #hashtag2 #hashtag3
