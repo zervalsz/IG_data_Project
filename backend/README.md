@@ -5,10 +5,11 @@ FastAPI-powered backend that provides AI-driven creator insights, content genera
 ## 🎯 Overview
 
 This backend service analyzes Instagram creator data using AI (OpenAI GPT) to provide:
-- **Trend-based content generation** - AI-generated posts optimized for engagement
-- **Style matching** - Generate content in any creator's style
-- **Creator insights** - Categorized analysis of 25+ Instagram creators
-- **Engagement metrics** - Real follower data and engagement rate calculations
+- **Trend-based content generation** - AI-generated posts optimized for engagement with category-specific templates
+- **Style matching** - Generate content in any creator's style with consistency scoring
+- **Creator insights** - Categorized analysis of 29 Instagram creators (including 5 celebrity accounts)
+- **Engagement metrics** - Real follower data and engagement rate calculations with transparent formulas
+- **Evidence-based recommendations** - References actual top posts with engagement data
 
 **Tech Stack:**
 - **Framework:** FastAPI (Python 3.12+)
@@ -71,11 +72,11 @@ cp .env.example .env
 #   DATABASE_NAME=ig_raw
 
 # 5. Start server
-uvicorn api.server:app --reload --host 0.0.0.0 --port 8000
+uvicorn api.server:app --reload --host 0.0.0.0 --port 5000
 ```
 
-**Server runs at:** http://localhost:8000  
-**API docs:** http://localhost:8000/docs
+**Server runs at:** http://localhost:5000  
+**API docs:** http://localhost:5000/docs
 
 ---
 
@@ -107,7 +108,7 @@ docker build -t instagram-backend:latest .
 # Run container
 docker run -d \
   --name instagram-backend \
-  -p 8000:8000 \
+  -p 5000:5000 \
   --env-file .env \
   instagram-backend:latest
 
@@ -209,7 +210,7 @@ heroku container:release web -a your-app-name
   }
   ```
 
-**Full API Documentation:** http://localhost:8000/docs
+**Full API Documentation:** http://localhost:5000/docs
 
 ---
 
@@ -227,8 +228,8 @@ DATABASE_NAME=ig_raw
 # OpenAI API key for content generation
 OPENAI_API_KEY=sk-proj-...
 
-# Server port (optional, default: 8000)
-PORT=8000
+# Server port (optional, default: 5000)
+PORT=5000
 ```
 
 ---
@@ -290,8 +291,8 @@ API Response (FastAPI routers)
 **Issue:** `OpenAI API error`  
 **Fix:** Verify `OPENAI_API_KEY` is valid and has credits
 
-**Issue:** `Port 8000 already in use`  
-**Fix:** `lsof -ti:8000 | xargs kill` or use different port
+**Issue:** `Port 5000 already in use`  
+**Fix:** `lsof -ti:5000 | xargs kill` or use different port
 
 ---
 

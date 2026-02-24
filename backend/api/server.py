@@ -96,10 +96,10 @@ if __name__ == "__main__":
     print("  ├─ 数据库层 (Database Layer): MongoDB + Repository Pattern")
     print("  ├─ 服务层 (Service Layer): 业务逻辑处理")
     print("  └─ API层 (API Layer): FastAPI RESTful接口")
-    print(f"\n🌐 服务地址: http://localhost:5001")
+    print(f"\n🌐 服务地址: http://localhost:5000")
     print(f"\n📚 API文档:")
-    print(f"  - Swagger UI: http://localhost:5001/docs")
-    print(f"  - ReDoc: http://localhost:5001/redoc")
+    print(f"  - Swagger UI: http://localhost:5000/docs")
+    print(f"  - ReDoc: http://localhost:5000/redoc")
     print(f"\n🔗 主要端点:")
     print(f"  - GET  /api/creators/network - 创作者网络数据")
     print(f"  - GET  /api/creators/list - 所有创作者列表")
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "api.server:app",
         host="0.0.0.0",
-        port=5001,
+        port=5000,
         reload=True,
         log_level="info"
     )

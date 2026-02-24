@@ -36,10 +36,26 @@ class GenerateRequest(BaseModel):
     format: str = "post"  # 格式选项
 
 
+class ConsistencyEvidence(BaseModel):
+    """一致性证据项"""
+    metric: str
+    status: str
+    detail: str
+
+
+class ConsistencyScore(BaseModel):
+    """风格一致性评分"""
+    overall_score: int
+    level: str
+    evidence: List[ConsistencyEvidence]
+    explanation: str
+
+
 class GenerateResponse(BaseModel):
     """生成响应模型"""
     success: bool
     content: str
+    consistency_score: ConsistencyScore = None
     error: str = ""
 
 

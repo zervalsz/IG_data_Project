@@ -6,17 +6,18 @@ Next.js-powered web application for visualizing Instagram creator insights, gene
 
 Modern, responsive frontend for the Instagram Creator Intelligence platform featuring:
 
-- **Creator Explorer** - Browse and filter 25+ Instagram creators by category
-- **Style Generator** - Generate content in any creator's style using AI
-- **Trend Generator** - Create trending posts based on real engagement data
-- **Multi-language Support** - English and Chinese UI
+- **Creator Explorer** - Browse and filter 29 Instagram creators by category (8 categories including Celebrity)
+- **Style Generator** - Generate content with style consistency scoring and evidence breakdown
+- **Trend Generator** - Create trending posts with category-specific templates, formula transparency, and collapsible strategy sections
+- **Dual-Language Support** - English and Chinese UI (next-intl)
+- **Landing Page Navigation** - Clear two-path navigation without top navigation bar
 
 **Tech Stack:**
-- **Framework:** Next.js 14 (App Router)
+- **Framework:** Next.js 16 (App Router with Turbopack)
 - **Language:** TypeScript
-- **Styling:** TailwindCSS
-- **i18n:** next-intl
-- **UI Components:** Radix UI primitives
+- **Styling:** Tailwind CSS v4
+- **i18n:** next-intl (zh/en)
+- **Package Manager:** pnpm
 
 ---
 
@@ -25,7 +26,7 @@ Modern, responsive frontend for the Instagram Creator Intelligence platform feat
 ### Prerequisites
 
 - Node.js 18+ and npm/pnpm
-- Backend API running at http://localhost:8000
+- Backend API running at http://localhost:5000
 
 ### Local Development
 
@@ -39,7 +40,7 @@ pnpm install
 
 # 3. Set up environment (.env.local)
 cp .env.example .env.local
-# Edit if needed (default backend: http://localhost:8000)
+# Edit if needed (default backend: http://localhost:5000)
 
 # 4. Run development server
 pnpm dev
@@ -147,8 +148,8 @@ Create posts based on trending patterns:
 Create `.env.local`:
 
 ```bash
-# Backend API URL (default: http://localhost:8000)
-NEXT_PUBLIC_API_URL=http://localhost:8000
+# Backend API URL (default: http://localhost:5000)
+NEXT_PUBLIC_API_URL=http://localhost:5000
 
 # Optional: Custom port
 PORT=3000
@@ -368,7 +369,6 @@ Category-based creator browse.
 
 - **Backend API:** See `../backend/README.md` for API endpoints
 - **Collectors:** See `../collectors/instagram/README.md` for data pipeline
-- **Video Analysis:** See `docs/VIDEO_ANALYSIS_API.md` for video feature (experimental)
 
 ---
 

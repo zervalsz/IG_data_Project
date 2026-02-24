@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Link } from "@/navigation";
-import { AccountCategories } from "@/components/AccountCategories";
 
 export function LandingPage() {
   return (
@@ -22,44 +21,113 @@ export function LandingPage() {
       {/* How It Works */}
       <section className="container mx-auto px-6 py-12">
         <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl shadow-xl p-10 text-white">
-          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
+          <h2 className="text-3xl font-bold text-center mb-4">How It Works</h2>
+          <p className="text-center text-purple-100 mb-12 max-w-2xl mx-auto">
+            Choose your path based on what you need: mimic a specific creator's style or generate trending content for your niche
+          </p>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                1
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Style Generator Track */}
+            <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm border border-white/20">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <span className="text-3xl">🎨</span>
+                <h3 className="text-2xl font-bold">Style Generator</h3>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Explore Creators</h3>
-              <p className="text-purple-100">
-                Browse creators by category and learn about their unique style
-              </p>
+              
+              <div className="bg-blue-500/30 rounded-lg p-4 mb-6">
+                <p className="text-sm font-semibold mb-1">Best for:</p>
+                <p className="text-sm text-blue-100">
+                  Matching a specific creator's voice, tone, and writing style
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">1</div>
+                  <div>
+                    <p className="font-semibold">Explore Creators</p>
+                    <p className="text-sm text-purple-100">Browse by category and learn about their style</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">2</div>
+                  <div>
+                    <p className="font-semibold">Select a Creator</p>
+                    <p className="text-sm text-purple-100">Pick one whose style resonates with you</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">3</div>
+                  <div>
+                    <p className="font-semibold">Generate Content</p>
+                    <p className="text-sm text-purple-100">Enter your topic and get AI-powered captions in their style</p>
+                  </div>
+                </div>
+              </div>
             </div>
             
-            <div className="text-center">
-              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                2
+            {/* Trend Generator Track */}
+            <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm border border-white/20">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <span className="text-3xl">📊</span>
+                <h3 className="text-2xl font-bold">Trend Generator</h3>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Choose Your Path</h3>
-              <p className="text-purple-100">
-                Pick style-based generation or trend-optimized content
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                3
+              
+              <div className="bg-orange-500/30 rounded-lg p-4 mb-6">
+                <p className="text-sm font-semibold mb-1">Best for:</p>
+                <p className="text-sm text-orange-100">
+                  Creating engagement-optimized content based on trending topics
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Generate Content</h3>
-              <p className="text-purple-100">
-                Get AI-powered Instagram captions and hashtags instantly
-              </p>
+              
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">1</div>
+                  <div>
+                    <p className="font-semibold">Choose Your Niche</p>
+                    <p className="text-sm text-purple-100">Select a category that matches your content</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-bold">2</div>
+                  <div>
+                    <p className="font-semibold">Generate Trending Content</p>
+                    <p className="text-sm text-purple-100">Get captions optimized for maximum engagement</p>
+                  </div>
+                </div>
+                
+                <div className="h-[88px] flex items-center justify-center">
+                  <p className="text-sm text-white/60 italic">Quick & direct path</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* What We Offer Section */}
-      <section className="container mx-auto px-6 py-12">
+      <section className="container mx-auto px-6 py-12 pb-20">
         <div className="bg-white rounded-3xl shadow-xl p-10">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
             What Can You Do Here?
@@ -68,7 +136,7 @@ export function LandingPage() {
           <div className="grid md:grid-cols-2 gap-8 mt-12">
             {/* Path 1: Style-Based Generation */}
             <Link 
-              href="/style-generator"
+              href="/explore-creators"
               className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 p-8 text-white transition-all hover:shadow-2xl hover:scale-105"
             >
               <div className="relative z-10">
@@ -108,20 +176,6 @@ export function LandingPage() {
               <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-orange-400 opacity-0 group-hover:opacity-100 transition-opacity" />
             </Link>
           </div>
-        </div>
-      </section>
-
-      {/* Explore Creators Section */}
-      <section id="creators" className="container mx-auto px-6 py-12 pb-20">
-        <div className="bg-white rounded-3xl shadow-xl p-10">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">
-            Explore Our Creators
-          </h2>
-          <p className="text-center text-gray-600 mb-10">
-            Browse Instagram creators across different categories to understand their style and content
-          </p>
-          
-          <AccountCategories />
         </div>
       </section>
     </main>

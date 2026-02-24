@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     const platform = searchParams.get('platform') || 'instagram'
     
     // Backend is always accessible from the server via localhost
-    const backendUrl = `http://localhost:8000/api/creators/list?platform=${platform}`
+    const backendUrl = `http://localhost:5000/api/creators/list?platform=${platform}`
     console.log('[api/style/creators] Proxying to:', backendUrl)
     
     const response = await fetch(backendUrl)

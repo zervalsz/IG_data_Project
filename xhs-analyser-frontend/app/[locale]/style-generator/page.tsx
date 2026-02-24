@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { useSearchParams } from "next/navigation";
 
 interface Creator {
@@ -17,6 +17,24 @@ interface Creator {
   };
 }
 
+interface ConsistencyEvidence {
+  metric: string;
+  status: string;
+  detail: string;
+}
+
+interface ConsistencyScore {
+  overall_score: number;
+  level: string;
+  evidence: ConsistencyEvidence[];
+  explanation: string;
+}
+
+interface GenerateResult {
+  content: string;
+  consistency_score?: ConsistencyScore;
+}
+
 export default function StyleGeneratorPage() {
   const searchParams = useSearchParams();
   const creatorParam = searchParams.get('creator');
@@ -25,7 +43,7 @@ export default function StyleGeneratorPage() {
   const [selectedCreator, setSelectedCreator] = useState<string>("");
   const [topic, setTopic] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<string>("");
+  const [result, setResult] = useState<GenerateResult | null>(null);
   const [error, setError] = useState<string>("");
   
   // Customization options
@@ -69,7 +87,7 @@ export default function StyleGeneratorPage() {
 
     setGenerating(true);
     setError('');
-    setResult('');
+    setResult(null);
 
     try {
       // Use Next.js API proxy
@@ -94,7 +112,10 @@ export default function StyleGeneratorPage() {
       }
       
       const data = await response.json();
-      setResult(data.content || '');
+      setResult({
+        content: data.content || '',
+        consistency_score: data.consistency_score
+      });
     } catch (error) {
       console.error('Error generating content:', error);
       setError(error instanceof Error ? error.message : 'Failed to generate content. Please try again.');
@@ -110,11 +131,11 @@ export default function StyleGeneratorPage() {
       <div className="container mx-auto px-6">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/" className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-4">
+          <Link href="/explore-creators" className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-4">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Back to Home
+            Back to Explore Creators
           </Link>
           <h1 className="text-4xl font-bold text-gray-900">🎨 Style-Based Generator</h1>
           <p className="text-gray-600 mt-2">Pick a creator and topic to generate content in their unique style</p>
@@ -330,24 +351,73 @@ export default function StyleGeneratorPage() {
             
             {result ? (
               <div className="space-y-4">
+                {/* Consistency Score Display */}
+                {result.consistency_score && (
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border-2 border-purple-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-gray-900">Style Consistency</h3>
+                      <div className="flex items-center gap-3">
+                        <div className={`text-3xl font-bold ${
+                          result.consistency_score.level === 'high' ? 'text-green-600' :
+                          result.consistency_score.level === 'medium' ? 'text-yellow-600' :
+                          'text-orange-600'
+                        }`}>
+                          {result.consistency_score.overall_score}/100
+                        </div>
+                        <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                          result.consistency_score.level === 'high' ? 'bg-green-100 text-green-700' :
+                          result.consistency_score.level === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-orange-100 text-orange-700'
+                        }`}>
+                          {result.consistency_score.level.toUpperCase()}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-gray-700 mb-4">
+                      {result.consistency_score.explanation}
+                    </p>
+                    
+                    {/* Evidence Breakdown */}
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-gray-800 text-sm mb-2">Evidence:</h4>
+                      {result.consistency_score.evidence.map((item, idx) => (
+                        <div key={idx} className="flex items-start gap-2 text-sm">
+                          <span className="text-lg">
+                            {item.status === 'perfect' ? '✅' : 
+                             item.status === 'close' || item.status === 'matched' ? '✓' : 
+                             item.status === 'estimated' ? '≈' : '⚠️'}
+                          </span>
+                          <div className="flex-1">
+                            <span className="font-semibold text-gray-800">{item.metric}:</span>
+                            <span className="text-gray-600 ml-2">{item.detail}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Generated Content */}
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Generated Content</h3>
                   <div className="prose prose-purple max-w-none">
                     <pre className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed">
-                      {result}
+                      {result.content}
                     </pre>
                   </div>
                 </div>
                 
                 <div className="flex gap-2">
                   <button
-                    onClick={() => navigator.clipboard.writeText(result)}
+                    onClick={() => navigator.clipboard.writeText(result.content)}
                     className="flex-1 bg-purple-100 text-purple-700 py-2 rounded-lg hover:bg-purple-200 transition-colors font-medium"
                   >
                     📋 Copy to Clipboard
                   </button>
                   <button
                     onClick={() => {
-                      setResult('');
+                      setResult(null);
                       setTopic('');
                     }}
                     className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"

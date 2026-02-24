@@ -38,13 +38,13 @@ sleep 5
 # 健康检查
 echo ""
 echo "🏥 健康检查..."
-if curl -s http://localhost:5001/api/health > /dev/null; then
-    echo "✅ 服务运行正常"
+if curl -s http://localhost:5000/api/health > /dev/null; then
+    echo "✅ 服务启动成功！"
     echo ""
-    echo "📊 API端点:"
-    echo "  - 健康检查: http://localhost:5001/api/health"
-    echo "  - 创作者列表: http://localhost:5001/api/style/creators"
-    echo "  - API文档: http://localhost:5001/docs"
+    echo "🔗 API端点："
+    echo "  - 健康检查: http://localhost:5000/api/health"
+    echo "  - 创作者列表: http://localhost:5000/api/style/creators"
+    echo "  - API文档: http://localhost:5000/docs"
     echo ""
     echo "📝 查看日志:"
     echo "  docker-compose logs -f"

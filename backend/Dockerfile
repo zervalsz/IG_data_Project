@@ -34,5 +34,5 @@ EXPOSE ${PORT}
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:${PORT}/api/health || exit 1
 
-# 10. 启动命令（使用默认端口5001，或环境变量指定的端口）
+# 10. 启动命令（使用默认端口5000，或环境变量指定的端口）
 CMD uvicorn api.server:app --host 0.0.0.0 --port ${PORT}

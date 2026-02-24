@@ -28,9 +28,9 @@ export function StyleChatbot() {
     const loadCreators = async () => {
       try {
         // Construct backend URL for GitHub Codespaces
-        let API_URL = 'http://localhost:5001';
+        let API_URL = 'http://localhost:5000';
         if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
-          API_URL = window.location.origin.replace('-3000.', '-5001.');
+          API_URL = window.location.origin.replace('-3000.', '-5000.');
         }
         console.log('[StyleChatbot] API URL:', API_URL);
         // Fetch Instagram creators only
@@ -68,9 +68,9 @@ export function StyleChatbot() {
 
     try {
       // Construct backend URL for GitHub Codespaces
-      let API_URL = 'http://localhost:5001';
+      let API_URL = 'http://localhost:5000';
       if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
-        API_URL = window.location.origin.replace('-3000.', '-5001.');
+        API_URL = window.location.origin.replace('-3000.', '-5000.');
       }
       const response = await fetch(`${API_URL}/api/style/generate`, {
         method: 'POST',

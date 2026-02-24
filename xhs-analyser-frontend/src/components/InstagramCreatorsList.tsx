@@ -59,7 +59,7 @@ export function InstagramCreatorsList() {
         <p className="text-red-600 mb-2">⚠️ Error loading creators</p>
         <p className="text-sm text-red-500">{error}</p>
         <p className="text-xs text-gray-500 mt-2">
-          Make sure the FastAPI backend is running at http://localhost:5001
+          Make sure the FastAPI backend is running at http://localhost:5000
         </p>
       </div>
     );

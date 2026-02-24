@@ -77,6 +77,8 @@ export default function TrendGeneratorPage() {
   const [error, setError] = useState<string>("");
   const [trendInsights, setTrendInsights] = useState<any>(null);
   const [evidence, setEvidence] = useState<any>(null);
+  const [showKeyStrategy, setShowKeyStrategy] = useState<boolean>(false);
+  const [showDetails, setShowDetails] = useState<boolean>(false);
   
   // Customization options
   const [tone, setTone] = useState<string>("engaging");
@@ -94,6 +96,8 @@ export default function TrendGeneratorPage() {
     setResult('');
     setTrendInsights(null);
     setEvidence(null);
+    setShowKeyStrategy(false);
+    setShowDetails(false);
 
     try {
       // Use Next.js API proxy
@@ -129,6 +133,36 @@ export default function TrendGeneratorPage() {
   };
 
   const selectedCategoryData = categories.find(c => c.id === selectedCategory);
+
+  // Parse generated content into sections
+  const parseContent = (content: string) => {
+    const sections = {
+      caption: '',
+      hashtags: '',
+      keyStrategy: '',
+      whyItWorks: ''
+    };
+    
+    // Extract Caption (everything between "Caption:" and "Hashtags:")
+    const captionMatch = content.match(/Caption:\s*(.*?)(?=\n*Hashtags:)/s);
+    if (captionMatch) sections.caption = captionMatch[1].trim();
+    
+    // Extract Hashtags (everything between "Hashtags:" and the markers or end)
+    const hashtagsMatch = content.match(/Hashtags:\s*(.*?)(?=\n*---KEY_STRATEGY_START---|$)/s);
+    if (hashtagsMatch) sections.hashtags = hashtagsMatch[1].trim();
+    
+    // Extract Key Strategy using markers
+    const keyStrategyMatch = content.match(/---KEY_STRATEGY_START---\s*(.*?)\s*---KEY_STRATEGY_END---/s);
+    if (keyStrategyMatch) sections.keyStrategy = keyStrategyMatch[1].trim();
+    
+    // Extract Why This Works using markers
+    const whyItWorksMatch = content.match(/---WHY_IT_WORKS_START---\s*(.*?)\s*---WHY_IT_WORKS_END---/s);
+    if (whyItWorksMatch) sections.whyItWorks = whyItWorksMatch[1].trim();
+    
+    return sections;
+  };
+  
+  const contentSections = result ? parseContent(result) : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 py-12">
@@ -440,25 +474,122 @@ export default function TrendGeneratorPage() {
                   </div>
                 )}
 
-                <div className="bg-gradient-to-br from-pink-50 to-orange-50 rounded-lg p-6">
-                  <div className="prose prose-pink max-w-none">
-                    <pre className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed">
-                      {result}
-                    </pre>
-                  </div>
+                {/* Generated Content Display */}
+                <div className="space-y-3">
+                  {contentSections && (
+                    <>
+                      {/* Caption + Hashtags Section (always visible) */}
+                      <div className="bg-gradient-to-br from-pink-50 to-orange-50 rounded-lg p-6">
+                        {contentSections.caption && (
+                          <div className="mb-4">
+                            <pre className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed">
+                              {contentSections.caption}
+                            </pre>
+                          </div>
+                        )}
+                        
+                        {contentSections.hashtags && (
+                          <div className="pt-3 border-t border-pink-200">
+                            <p className="text-gray-700 text-sm">{contentSections.hashtags}</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Key Strategy - Collapsible */}
+                      {contentSections.keyStrategy && (
+                        <div className="border-2 border-pink-200 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => setShowKeyStrategy(!showKeyStrategy)}
+                            className="w-full bg-pink-100 hover:bg-pink-150 transition-colors p-4 flex items-center justify-between text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">🎯</span>
+                              <span className="font-semibold text-pink-900">Key Strategy (Summary)</span>
+                            </div>
+                            <svg 
+                              className={`w-5 h-5 text-pink-700 transition-transform ${showKeyStrategy ? 'rotate-180' : ''}`} 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          
+                          {showKeyStrategy && (
+                            <div className="bg-white p-4 border-t border-pink-200">
+                              <pre className="whitespace-pre-wrap font-sans text-gray-700 text-sm leading-relaxed">
+                                {contentSections.keyStrategy}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Why This Works - Collapsible */}
+                      {contentSections.whyItWorks && (
+                        <div className="border-2 border-indigo-200 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => setShowDetails(!showDetails)}
+                            className="w-full bg-indigo-100 hover:bg-indigo-150 transition-colors p-4 flex items-center justify-between text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">💡</span>
+                              <span className="font-semibold text-indigo-900">Why This Works (Details)</span>
+                            </div>
+                            <svg 
+                              className={`w-5 h-5 text-indigo-700 transition-transform ${showDetails ? 'rotate-180' : ''}`} 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          
+                          {showDetails && (
+                            <div className="bg-white p-4 border-t border-indigo-200">
+                              <pre className="whitespace-pre-wrap font-sans text-gray-700 text-sm leading-relaxed">
+                                {contentSections.whyItWorks}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                  
+                  {/* Fallback: Show raw content if parsing fails */}
+                  {!contentSections && (
+                    <div className="bg-gradient-to-br from-pink-50 to-orange-50 rounded-lg p-6">
+                      <div className="prose prose-pink max-w-none">
+                        <pre className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed">
+                          {result}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex gap-2">
                   <button
-                    onClick={() => navigator.clipboard.writeText(result)}
+                    onClick={() => {
+                      // Copy only caption and hashtags for easy posting
+                      const copyText = contentSections 
+                        ? `${contentSections.caption}\n\n${contentSections.hashtags}`
+                        : result;
+                      navigator.clipboard.writeText(copyText);
+                    }}
                     className="flex-1 bg-pink-100 text-pink-700 py-2 rounded-lg hover:bg-pink-200 transition-colors font-medium"
                   >
-                    📋 Copy to Clipboard
+                    📋 Copy Caption + Hashtags
                   </button>
                   <button
                     onClick={() => {
                       setResult('');
                       setTrendInsights(null);
+                      setShowKeyStrategy(false);
+                      setShowDetails(false);
                     }}
                     className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                   >

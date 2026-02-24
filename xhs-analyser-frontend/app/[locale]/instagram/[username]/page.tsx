@@ -85,7 +85,7 @@ export default function CreatorDetailPage({
       <main className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
         <div className="container mx-auto px-6 py-12">
           <Link
-            href="/instagram"
+            href="/explore-creators"
             className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-8"
           >
             <svg
@@ -102,7 +102,7 @@ export default function CreatorDetailPage({
                 d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
               />
             </svg>
-            Back to Instagram Creators
+            Back to Explore Creators
           </Link>
 
           <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
@@ -128,7 +128,7 @@ export default function CreatorDetailPage({
       <div className="container mx-auto px-6 py-12 max-w-5xl">
         {/* Header */}
         <Link
-          href="/instagram"
+          href="/explore-creators"
           className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-8"
         >
           <svg
@@ -145,7 +145,7 @@ export default function CreatorDetailPage({
               d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
             />
           </svg>
-          Back to Instagram Creators
+          Back to Explore Creators
         </Link>
 
         {/* Profile Header */}

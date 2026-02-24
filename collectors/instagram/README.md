@@ -370,9 +370,27 @@ GOOGLE_API_KEY=...
 
 ---
 
-## 🎯 Next Steps
+## � Celebrity Accounts Added
 
-1. **Start Backend:** `cd ../../backend && uvicorn api.server:app --reload`
-2. **Start Frontend:** `cd ../../xhs-analyser-frontend && npm run dev`
+The following celebrity Instagram accounts have been added to the database for demo purposes to showcase the AI's ability to capture distinct, recognizable voices.
+
+| Username | Name | Followers | Category | Added | Topics |
+|----------|------|-----------|----------|-------|--------|
+| **@therock** | Dwayne "The Rock" Johnson | 396M+ | Celebrity | 2026-02-23 | Film/acting, fitness, product endorsements |
+| **@kimkardashian** | Kim Kardashian | 363M+ | Celebrity | 2026-02-23 | Brand launches, fashion, family |
+| **@realdonaldtrump** | Donald Trump | 26M+ | Celebrity | 2026-02-23 | Political updates, national events, movie promotion |
+| **@taylorswift** | Taylor Swift | 283M+ | Celebrity | 2026-02-23 | Music releases, videos, tours, merchandise, storytelling |
+| **@leomessi** | Lionel Messi | 504M+ | Celebrity | 2026-02-23 | Football, achievements, brand partnerships, fan engagement |
+
+**Total: 5 Celebrity Accounts**
+
+These high-profile accounts demonstrate the platform's capability to analyze and mimic distinctive content styles from world-famous personalities with massive followings.
+
+---
+
+## �🎯 Next Steps
+
+1. **Start Backend:** `cd ../../backend && uvicorn api.server:app --host 0.0.0.0 --port 5000 --reload`
+2. **Start Frontend:** `cd ../../xhs-analyser-frontend && pnpm dev`
 3. **Access UI:** http://localhost:3000
 

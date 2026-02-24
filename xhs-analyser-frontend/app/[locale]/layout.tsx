@@ -1,7 +1,6 @@
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
 import '../globals.css'
-import { Header } from '@/components/Header'
 
 export default async function LocaleLayout({ children, params }: { children: React.ReactNode; params: { locale: string } }) {
   // params may be a thenable in Next.js; await it before accessing properties
@@ -14,7 +13,6 @@ export default async function LocaleLayout({ children, params }: { children: Rea
 
   return (
     <NextIntlClientProvider messages={messages} locale={locale}>
-      <Header currentLocale={locale} />
       {children}
     </NextIntlClientProvider>
   )

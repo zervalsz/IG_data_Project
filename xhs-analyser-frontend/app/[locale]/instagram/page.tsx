@@ -71,7 +71,7 @@ export default function InstagramPage() {
           <p className="text-sm text-blue-700 mb-2">
             This page fetches data from the FastAPI backend running at{" "}
             <code className="bg-blue-100 px-2 py-1 rounded">
-              http://localhost:5001
+              http://localhost:5000
             </code>
           </p>
           <p className="text-xs text-blue-600">

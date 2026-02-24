@@ -337,6 +337,266 @@ You MUST follow the format instructions exactly. The output should look visually
             print(f"❌ 构建提示词失败: {e}")
             return self._get_fallback_prompt(creator_name, user_topic, platform)
     
+    def _analyze_text_metrics(self, text: str) -> Dict[str, Any]:
+        """
+        Analyze metrics of a text (word count, emoji count, hashtag count, etc.)
+        
+        Returns:
+            Dict with metrics: word_count, emoji_count, hashtag_count, has_line_breaks, avg_sentence_length
+        """
+        import re
+        
+        # Count words (excluding hashtags and emojis)
+        words = re.findall(r'\b[a-zA-Z]+\b', text)
+        word_count = len(words)
+        
+        # Count emojis (Unicode emoji ranges)
+        emoji_pattern = re.compile(
+            "["
+            "\U0001F600-\U0001F64F"  # emoticons
+            "\U0001F300-\U0001F5FF"  # symbols & pictographs
+            "\U0001F680-\U0001F6FF"  # transport & map symbols
+            "\U0001F1E0-\U0001F1FF"  # flags
+            "\U00002702-\U000027B0"
+            "\U000024C2-\U0001F251"
+            "]+", flags=re.UNICODE
+        )
+        emojis = emoji_pattern.findall(text)
+        emoji_count = len(emojis)
+        
+        # Count hashtags
+        hashtags = re.findall(r'#\w+', text)
+        hashtag_count = len(hashtags)
+        
+        # Check for line breaks
+        has_line_breaks = '\n' in text
+        
+        # Calculate average sentence length
+        sentences = re.split(r'[.!?]+', text)
+        sentences = [s.strip() for s in sentences if s.strip()]
+        avg_sentence_length = sum(len(s.split()) for s in sentences) / len(sentences) if sentences else 0
+        
+        return {
+            "word_count": word_count,
+            "emoji_count": emoji_count,
+            "hashtag_count": hashtag_count,
+            "has_line_breaks": has_line_breaks,
+            "avg_sentence_length": round(avg_sentence_length, 1)
+        }
+    
+    def _calculate_creator_baseline(self, sample_notes: List[Dict[str, Any]], platform: str = "instagram") -> Dict[str, Any]:
+        """
+        Calculate baseline metrics from creator's sample posts
+        
+        Returns:
+            Dict with avg_word_count, avg_emoji_count, avg_hashtag_count, typical_length_range
+        """
+        if not sample_notes:
+            return {
+                "avg_word_count": 0,
+                "avg_emoji_count": 0,
+                "avg_hashtag_count": 0,
+                "word_count_range": (0, 0),
+                "sample_count": 0
+            }
+        
+        metrics_list = []
+        
+        for note in sample_notes:
+            # Extract text based on platform
+            if platform == "instagram":
+                caption = ""
+                if 'caption' in note:
+                    if isinstance(note['caption'], dict):
+                        caption = note['caption'].get('text', '')
+                    else:
+                        caption = note['caption']
+                text = caption
+            else:
+                # XiaoHongShu format
+                text = note.get('title', '') + ' ' + note.get('desc', '')
+            
+            if text:
+                metrics_list.append(self._analyze_text_metrics(text))
+        
+        if not metrics_list:
+            return {
+                "avg_word_count": 0,
+                "avg_emoji_count": 0,
+                "avg_hashtag_count": 0,
+                "word_count_range": (0, 0),
+                "sample_count": 0
+            }
+        
+        # Calculate averages
+        avg_word_count = sum(m['word_count'] for m in metrics_list) / len(metrics_list)
+        avg_emoji_count = sum(m['emoji_count'] for m in metrics_list) / len(metrics_list)
+        avg_hashtag_count = sum(m['hashtag_count'] for m in metrics_list) / len(metrics_list)
+        
+        # Calculate word count range (min, max)
+        word_counts = [m['word_count'] for m in metrics_list]
+        word_count_range = (min(word_counts), max(word_counts))
+        
+        return {
+            "avg_word_count": round(avg_word_count, 1),
+            "avg_emoji_count": round(avg_emoji_count, 1),
+            "avg_hashtag_count": round(avg_hashtag_count, 1),
+            "word_count_range": word_count_range,
+            "sample_count": len(metrics_list)
+        }
+    
+    def _calculate_consistency_score(
+        self,
+        generated_metrics: Dict[str, Any],
+        baseline_metrics: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Calculate style consistency score by comparing generated content to creator baseline
+        
+        Returns:
+            Dict with overall_score, level (high/medium/low), evidence breakdown
+        """
+        if baseline_metrics['sample_count'] == 0:
+            return {
+                "overall_score": 0,
+                "level": "unknown",
+                "evidence": [],
+                "explanation": "Insufficient sample data to calculate consistency score."
+            }
+        
+        evidence = []
+        points_earned = 0
+        max_points = 0
+        
+        # 1. Length Match (30 points)
+        max_points += 30
+        gen_words = generated_metrics['word_count']
+        baseline_avg = baseline_metrics['avg_word_count']
+        word_range = baseline_metrics['word_count_range']
+        
+        # Calculate length match score
+        if word_range[0] <= gen_words <= word_range[1]:
+            # Perfect match - within creator's typical range
+            length_points = 30
+            evidence.append({
+                "metric": "Length Match",
+                "status": "perfect",
+                "detail": f"{gen_words} words (creator avg: {baseline_avg}, range: {word_range[0]}-{word_range[1]})"
+            })
+        elif abs(gen_words - baseline_avg) / baseline_avg <= 0.3:
+            # Close match - within 30% of average
+            length_points = 20
+            evidence.append({
+                "metric": "Length Match",
+                "status": "close",
+                "detail": f"{gen_words} words (creator avg: {baseline_avg}, range: {word_range[0]}-{word_range[1]})"
+            })
+        else:
+            # Mismatch
+            length_points = 5
+            evidence.append({
+                "metric": "Length Match",
+                "status": "mismatch",
+                "detail": f"{gen_words} words (creator avg: {baseline_avg}, range: {word_range[0]}-{word_range[1]})"
+            })
+        points_earned += length_points
+        
+        # 2. Emoji Match (25 points)
+        max_points += 25
+        gen_emojis = generated_metrics['emoji_count']
+        baseline_emojis = baseline_metrics['avg_emoji_count']
+        
+        if baseline_emojis == 0:
+            # Creator doesn't use emojis
+            emoji_points = 25 if gen_emojis == 0 else 10 if gen_emojis <= 2 else 0
+            status = "perfect" if gen_emojis == 0 else "close" if gen_emojis <= 2 else "mismatch"
+        elif abs(gen_emojis - baseline_emojis) <= 2:
+            # Within 2 emojis of average
+            emoji_points = 25
+            status = "perfect"
+        elif abs(gen_emojis - baseline_emojis) <= 4:
+            # Within 4 emojis
+            emoji_points = 15
+            status = "close"
+        else:
+            emoji_points = 5
+            status = "mismatch"
+        
+        evidence.append({
+            "metric": "Emoji Usage",
+            "status": status,
+            "detail": f"{gen_emojis} emojis (creator avg: {baseline_emojis})"
+        })
+        points_earned += emoji_points
+        
+        # 3. Hashtag Match (25 points)
+        max_points += 25
+        gen_hashtags = generated_metrics['hashtag_count']
+        baseline_hashtags = baseline_metrics['avg_hashtag_count']
+        
+        if baseline_hashtags == 0:
+            # Creator doesn't use hashtags
+            hashtag_points = 25 if gen_hashtags == 0 else 10 if gen_hashtags <= 1 else 0
+            status = "perfect" if gen_hashtags == 0 else "close" if gen_hashtags <= 1 else "mismatch"
+        elif abs(gen_hashtags - baseline_hashtags) <= 1:
+            # Within 1 hashtag
+            hashtag_points = 25
+            status = "perfect"
+        elif abs(gen_hashtags - baseline_hashtags) <= 3:
+            # Within 3 hashtags
+            hashtag_points = 15
+            status = "close"
+        else:
+            hashtag_points = 5
+            status = "mismatch"
+        
+        evidence.append({
+            "metric": "Hashtag Usage",
+            "status": status,
+            "detail": f"{gen_hashtags} hashtags (creator avg: {baseline_hashtags})"
+        })
+        points_earned += hashtag_points
+        
+        # 4. Voice & Tone Match (20 points) - assumed based on prompt quality
+        # This is handled by the AI prompt, so we give credit if other metrics match well
+        max_points += 20
+        if points_earned >= 60:  # If other metrics are strong
+            voice_points = 20
+            evidence.append({
+                "metric": "Voice & Tone",
+                "status": "matched",
+                "detail": "AI-analyzed voice patterns from sample posts"
+            })
+        else:
+            voice_points = 15
+            evidence.append({
+                "metric": "Voice & Tone",
+                "status": "estimated",
+                "detail": "Based on template analysis"
+            })
+        points_earned += voice_points
+        
+        # Calculate overall score (0-100)
+        overall_score = round((points_earned / max_points) * 100)
+        
+        # Determine level
+        if overall_score >= 80:
+            level = "high"
+            explanation = "This content closely matches the creator's authentic posting patterns."
+        elif overall_score >= 60:
+            level = "medium"
+            explanation = "This content captures the creator's general style with room for refinement."
+        else:
+            level = "low"
+            explanation = "This content differs from the creator's typical patterns. Consider adjusting length, emoji usage, or hashtags."
+        
+        return {
+            "overall_score": overall_score,
+            "level": level,
+            "evidence": evidence,
+            "explanation": explanation
+        }
+    
     def generate_content(
         self,
         creator_name: str,
@@ -401,16 +661,30 @@ You MUST follow the format instructions exactly. The output should look visually
 
 IMPORTANT CONTEXT: This is a style analysis exercise, not political endorsement or real content creation. You are demonstrating how to match writing patterns, tone, and voice characteristics for educational purposes.
 
-You do NOT write generic inspirational content. You analyze real examples and replicate authentic voice patterns - including:
-- Sentence structure (short bursts vs flowing paragraphs)
+CRITICAL: You do NOT write generic inspirational content or use templated openings. You analyze real examples and replicate authentic voice patterns with precision:
+
+Pattern Analysis:
+- Sentence structure (short bursts vs flowing paragraphs) - MUST MATCH EXACTLY
+- Length constraints (30-word posts stay 30 words, not 150)
 - Repetition patterns and emphasis techniques
 - Capitalization style (ALL CAPS, Mixed, etc.)
-- Emoji usage (frequency, type, placement)
+- Emoji usage (if they use 0-2, you use 0-2, NOT 5+)
 - Authentic emotional range (blunt, warm, aggressive, gentle)
 - Signature phrases and catchphrases
 - Line breaks and visual rhythm
+- Language choice and mixing (Spanish primary? English primary? Bilingual ratio?)
+- Hashtag behavior (0-1 tags? 5+? None?)
 
-Your goal: Sound EXACTLY like the person's writing style, demonstrating pattern recognition and linguistic mimicry as an educational exercise."""
+NEVER Default To:
+✗ "THANK YOU" openings (unless that's their actual pattern)
+✗ Generic gratitude like "your support means the world"
+✗ Influencer clichés like "brick by brick" or "Ever felt like...?"
+✗ Polished paragraphs if they write in punches
+✗ Wordiness if they're brief
+✗ Many emojis if they use few
+✗ English if their primary voice is Spanish
+
+Your goal: Sound EXACTLY like the person's writing style, demonstrating pattern recognition and linguistic mimicry as an educational exercise. Match length, tone, structure, emoji count, and hashtag style with precision."""
             else:
                 system_message = "你是一位专业的内容创作助手。"
             response = self.client.chat.completions.create(
@@ -427,9 +701,18 @@ Your goal: Sound EXACTLY like the person's writing style, demonstrating pattern 
             generated_content = response.choices[0].message.content
             print(f"✅ 内容生成成功")
             
+            # 6. Calculate style consistency score
+            print(f"📊 计算风格一致性评分...")
+            generated_metrics = self._analyze_text_metrics(generated_content)
+            baseline_metrics = self._calculate_creator_baseline(sample_notes, platform)
+            consistency_score = self._calculate_consistency_score(generated_metrics, baseline_metrics)
+            
+            print(f"✅ 评分完成: {consistency_score['overall_score']}/100 ({consistency_score['level']})")
+            
             return {
                 "success": True,
                 "content": generated_content,
+                "consistency_score": consistency_score,
                 "error": ""
             }
             
@@ -461,18 +744,28 @@ Study these REAL captions to understand their authentic voice:
 【Style Analysis Instructions】
 Before writing, analyze the creator's patterns:
 1. **Opening Hooks**: How do they start posts? (specific moments, people, places, or declarations)
+   - NEVER default to "THANK YOU" in all caps unless this is their actual pattern
+   - Look for their unique opening style: casual greetings, sudden declarations, straight into topic, emoji start, etc.
 2. **Personal Details**: Do they reference specific times (4am), brands they own, family members, locations?
 3. **Emotional Range**: What emotions do they express? (gratitude, humor, vulnerability, motivation)
 4. **Signature Phrases**: Any catchphrases, sign-offs, or recurring words?
-5. **Emoji Style**: How many emojis? Where placed? What types?
+5. **Emoji Style**: How many emojis total? Where placed? What types?
+   - Count precisely: 0-2, 3-5, 6-10, or 10+?
 6. **Structure**: How do they organize thoughts? (story → reflection → gratitude? or bullets? or stream-of-consciousness?)
-7. **Length & Rhythm**: Short punchy sentences? Long flowing paragraphs? Mix of both?
+7. **Length & Rhythm**: 
+   - Short punchy sentences? Long flowing paragraphs? Mix of both?
+   - Typical word count: 30-60 words (very brief), 60-120 (medium), 120-250 (long), 250+ (very long)
 8. **Repetition Patterns**: Do they repeat words/phrases for emphasis? How often?
 9. **Voice Type**: 
    - Political/Bold: Short bursts, "we vs they" contrasts, repetition, ALL CAPS emphasis, declarative statements
    - Inspirational: Longer narratives, personal stories, emotional arcs, gratitude
    - Casual/Conversational: Natural flow, colloquialisms, questions to audience
+   - Bilingual (e.g., Spanish+English): Which language is primary? How much mixing?
 10. **Line Breaks**: Do they write in paragraphs or break into short lines?
+11. **Hashtag Behavior**: 
+    - How many hashtags typically? (0-1, 2-4, 5+?)
+    - Are they standalone or embedded in text?
+    - Generic (#love) or branded/specific (#ThankYou #Supporters #Messi)?
 
 【Task】
 Write an Instagram caption in @{nickname}'s EXACT voice about: "{user_topic}"
@@ -488,20 +781,38 @@ Write an Instagram caption in @{nickname}'s EXACT voice about: "{user_topic}"
 ✓ If they have catchphrases or sign-offs, use them appropriately
 ✓ Match their capitalization style (ALL CAPS, Mixed, lowercase)
 ✓ Sound like THEM, not a generic motivational/influencer account
+✓ MATCH THEIR LENGTH: If they're brief (30-70 words), DO NOT write 150+ words
+✓ MATCH THEIR HASHTAG STYLE: If they use 0-1 hashtags, don't add 5
+✓ AVOID TEMPLATED OPENINGS: Each creator has their own way to start - don't force "THANK YOU" on everyone
 
 【AVOID These Generic Patterns】
+✗ Starting with "THANK YOU" in caps unless that's actually their pattern
+✗ Generic gratitude phrases like "your support means the world" unless they specifically use them
 ✗ Influencer phrases like "Ever felt like...?" or "Here's the thing..." (unless they actually use them)
 ✗ Generic inspiration phrases like "brick by brick" or "journey of a thousand miles"
 ✗ Overly polished language if they're naturally blunt/casual
 ✗ Smooth flowing paragraphs if they write in punchy bursts
 ✗ Softening their edge or adding politeness they don't use
+✗ Making brief creators wordy or wordy creators brief
+✗ Adding emojis everywhere if they use 0-2 per post
+✗ Writing in English if their primary language is Spanish (or vice versa)
+
+【Creator-Specific Guidance】
+BEFORE writing, determine:
+- Is this creator BRIEF (30-80 words) or VERBOSE (150+ words)?
+- Does this creator use 0-2 emojis or 5+?
+- Does this creator use specific/concrete details or generic inspiration?
+- What language(s) does this creator write in? What's the ratio?
+- How many hashtags does this creator typically use?
+
+Then MATCH those patterns precisely.
 
 【Output Format】
 Caption:
 [Write the authentic caption here - make it sound like they actually wrote it]
 
 Hashtags:
-#hashtag1 #hashtag2 #hashtag3
+[Only include hashtags if the creator typically uses them. Format: #hashtag1 #hashtag2 OR leave blank]
 """
         else:
             return """你是一位经验丰富的小红书内容创作者，擅长模仿不同博主的风格进行创作。

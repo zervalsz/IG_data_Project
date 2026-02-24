@@ -3,7 +3,7 @@
  * 这个文件封装了所有与后端 FastAPI 服务的通信
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
 /**
  * 通用的 fetch 封装函数

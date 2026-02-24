@@ -145,13 +145,16 @@ class TrendService:
         
         if not all_posts:
             return {
+                'creators_analyzed': len(creators),
                 'total_posts': 0,
                 'avg_likes': 0,
                 'avg_comments': 0,
                 'avg_engagement': 0,
                 'engagement_rate': 0.0,
+                'engagement_ratio': 274.5,
                 'top_posts': [],
-                'common_topics': []
+                'common_topics': [],
+                'evidence': {}
             }
         
         # Calculate metrics
@@ -221,6 +224,7 @@ class TrendService:
         evidence = self._extract_evidence(top_posts[:5])
         
         return {
+            'creators_analyzed': len(creators),  # Number of creators analyzed
             'total_posts': len(all_posts),
             # Projected metrics for ~10K follower account
             'avg_likes': expected_likes,
@@ -248,7 +252,7 @@ class TrendService:
             top_posts: List of top performing posts
             
         Returns:
-            Evidence dictionary with keywords, hooks, hashtags, and samples
+            Evidence dictionary with keywords, hooks, hashtags, and post samples
         """
         import re
         from collections import Counter
@@ -256,6 +260,7 @@ class TrendService:
         captions = []
         all_hashtags = []
         hooks = []
+        post_samples = []  # NEW: Store actual post samples
         
         for post in top_posts:
             caption = post.get('caption', post.get('desc', post.get('title', '')))
@@ -270,6 +275,14 @@ class TrendService:
                 # Extract hashtags
                 hashtags = re.findall(r'#\w+', caption)
                 all_hashtags.extend(hashtags)
+                
+                # NEW: Store post sample with metadata
+                post_samples.append({
+                    'excerpt': caption[:100] + ('...' if len(caption) > 100 else ''),
+                    'likes': post.get('like_count', post.get('liked_count', 0)),
+                    'comments': post.get('comment_count', 0),
+                    'engagement': post.get('engagement', 0)
+                })
         
         # Extract keywords (simple approach - most common words)
         all_text = ' '.join(captions).lower()
@@ -317,7 +330,8 @@ class TrendService:
         return {
             'keywords': top_keywords,
             'hooks': hooks_with_explanations,  # Hooks with explanations
-            'hashtags': top_hashtags
+            'hashtags': top_hashtags,
+            'post_samples': post_samples[:3]  # NEW: Include 3 actual post samples
         }
     
     def _analyze_hooks(self, hooks: List[str]) -> List[Dict[str, str]]:
@@ -412,28 +426,84 @@ Keep explanations concise and actionable."""
         
         category_name = category_names.get(category, category)
         
-        # Build context from top posts
-        top_examples = "\n".join([
-            f"- {caption[:150]}..."
-            for caption in analysis.get('top_captions', [])[:5]
-            if caption
-        ])
+        # NEW: Build evidence section with actual post samples
+        evidence = analysis.get('evidence', {})
+        post_samples = evidence.get('post_samples', [])
+        samples_text = "\n".join([
+            f"{i+1}. \"{sample['excerpt']}\" ({sample['likes']:,} likes, {sample['comments']:,} comments)"
+            for i, sample in enumerate(post_samples[:3])
+        ]) if post_samples else "No samples available"
         
-        prompt = f"""Based on analysis of {analysis['total_posts']} high-performing posts in the {category_name} category on Instagram:
+        # NEW: Category-specific content templates
+        category_templates = {
+            'Food': """CATEGORY-SPECIFIC PATTERNS (Food & Cooking):
+Post Types: 60% recipe narrative (step-by-step + sensory details), 40% quick tips (substitutions, time-saving hacks)
+Hook Styles: Sensory descriptions ("The smell of..."), Quick promise ("5-minute..."), Revelation ("I've been making this wrong...")
+Key Elements: Ingredient lists, timing, difficulty level, dietary tags (vegan, gluten-free), serving size""",
+            
+            'Tech': """CATEGORY-SPECIFIC PATTERNS (Technology):
+Post Types: 50% hot takes (contrarian opinions), 30% comparisons (A vs B, old vs new), 20% personal stories
+Hook Styles: Controversial statement, Myth-busting, Surprising stat, Bold prediction
+Key Elements: Specific tools/apps mentioned, version numbers, before/after comparison, "unpopular opinion""",
+            
+            'Fitness': """CATEGORY-SPECIFIC PATTERNS (Fitness & Sports):
+Post Types: 50% challenges/routines ("Try this workout"), 30% mindset/motivation, 20% form tips ("Stop doing this")
+Hook Styles: Challenge call-out, Common mistake exposed, Personal PR/achievement, "If you're struggling with..."
+Key Elements: Rep ranges, set counts, form cues, progression timeline, rest periods, save-this CTA""",
+            
+            'Finance': """CATEGORY-SPECIFIC PATTERNS (Finance & Money):
+Post Types: 50% actionable steps (budgeting, saving), 30% mindset shifts, 20% personal stories (debt-free journey)
+Hook Styles: Money mistake confession, Surprising calculation ("If you invest $X..."), Relatable struggle
+Key Elements: Specific dollar amounts, time frames, actionable tips, myth-busting, income levels mentioned""",
+            
+            'Wellness': """CATEGORY-SPECIFIC PATTERNS (Wellness):
+Post Types: 40% personal experiences (vulnerability), 40% educational (psychology concepts), 20% tips/practices
+Hook Styles: Vulnerable revelation, Reframing common beliefs, Permission-giving ("It's okay to...")
+Key Elements: Feelings named, therapy concepts explained, self-compassion language, boundary-setting""",
+            
+            'Fashion': """CATEGORY-SPECIFIC PATTERNS (Fashion):
+Post Types: 50% outfit formulas ("How to style..."), 30% trend analysis, 20% shopping guides
+Hook Styles: Outfit formula reveal, Trend prediction, Styling secret, Wardrobe staple spotlight
+Key Elements: Specific brands/items, price points, body type considerations, occasion tags""",
+            
+            'Lifestyle': """CATEGORY-SPECIFIC PATTERNS (Lifestyle):
+Post Types: Mix of personal stories (40%), tips/hacks (30%), recommendations (30%)
+Hook Styles: Relatable moment, Life update, Product discovery, "Things I learned this week"
+Key Elements: Day-in-life details, product recommendations, personal anecdotes, conversational tone"""
+        }
+        
+        category_template = category_templates.get(category, category_templates['Lifestyle'])
+        
+        # NEW: DATA GROUNDING - Show calculation inputs
+        data_grounding = f"""CALCULATION METHODOLOGY:
+✓ {analysis['creators_analyzed']} creators analyzed
+✓ {analysis['total_posts']} top posts sampled
+✓ Follower baseline: 10,000 (for projection)
+✓ Formula: Expected Engagement = (Engagement Rate / 100) × Baseline Followers
+✓ Split ratio: {analysis.get('engagement_ratio', 274.5)}:1 (likes:comments) from actual data
+  → Likes = Total Engagement × ({analysis.get('engagement_ratio', 274.5)} / {analysis.get('engagement_ratio', 274.5) + 1})
+  → Comments = Total Engagement × (1 / {analysis.get('engagement_ratio', 274.5) + 1})"""
+        
+        prompt = f"""Based on analysis of {analysis['total_posts']} high-performing posts in the {category_name} category:
 
-ENGAGEMENT BENCHMARKS:
-- Average Engagement Rate: {analysis.get('engagement_rate', 0)}% (of followers)
-- Expected performance for ~10K follower account: {analysis['avg_likes']:,} likes, {analysis['avg_comments']:,} comments
-- Typical engagement ratio: {analysis.get('engagement_ratio', 'N/A')}:1 (likes:comments)
+{data_grounding}
 
-TOP PERFORMING CONTENT EXAMPLES:
-{top_examples if top_examples else "No examples available"}
+PERFORMANCE BENCHMARKS:
+- Average Engagement Rate: {analysis.get('engagement_rate', 0)}% of followers
+- Expected for 10K account: {analysis['avg_likes']:,} likes + {analysis['avg_comments']:,} comments
+- Engagement ratio: {analysis.get('engagement_ratio', 'N/A')}:1
 
-Generate an Instagram post that is optimized for maximum engagement in this category. The post should:
-1. Follow the successful patterns from the top-performing content
-2. Use engaging hooks and storytelling techniques that work in this niche
-3. Include relevant topics and themes that resonate with this audience
-4. Be authentic and valuable to the target audience
+ACTUAL POST EXAMPLES:
+{samples_text}
+
+{category_template}
+
+Generate an Instagram post optimized for maximum engagement. You MUST:
+1. Follow the category-specific post type distribution above
+2. Use hook styles proven to work in this niche
+3. Include category-specific elements (ingredients for food, form cues for fitness, etc.)
+4. Match the natural voice and structure of top performers
+5. Be authentic - avoid generic inspirational language
 """
         
         # Add customization instructions
@@ -511,7 +581,33 @@ Caption: [Your content here - following the format structure above]
 
 Hashtags: [Relevant hashtags]
 
-Key Strategy: [Why this will perform well]"""
+---KEY_STRATEGY_START---
+• Hook type: [Which hook style used and why]
+• Evidence match: [How it mirrors top-performing patterns]
+• CTA: [What action you're prompting]
+---KEY_STRATEGY_END---
+
+---WHY_IT_WORKS_START---
+1) What the Top Posts Do (Evidence):
+   - Hook patterns observed: [List 2-3 specific examples from the actual post samples above]
+   - Keyword/hashtag patterns: [Reference the common keywords and hashtags]
+   - Structure patterns: [e.g., story → takeaway → CTA, listicle, hot take, before/after, etc.]
+
+2) What We Copied Into This Generated Post:
+   - Hook pattern used: [Point to the exact first 1-2 lines and explain the technique]
+   - Payoff location: [Where in the middle the value/insight/story is delivered]
+   - CTA placement: [Where and how the call-to-action appears at the end]
+
+3) Why It Boosts Engagement:
+   - Expected effect: [Choose 1-2: more comments / saves / shares]
+   - Reason: [Explain the psychological trigger - e.g., "nostalgia prompts personal replies", "comparison prompts debate", "recipe steps drive saves", "hot take creates controversy", "relatable struggle builds community"]
+---WHY_IT_WORKS_END---
+
+IMPORTANT: 
+- Caption + Hashtags = what the user will post (keep it clean and ready to copy)
+- Key Strategy = 3 short bullets for quick reference
+- Why This Works = detailed data-driven explanation
+- Use the markers (---KEY_STRATEGY_START--- etc.) to help parse sections"""
         
         prompt += customization
 
