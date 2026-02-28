@@ -1,7 +1,7 @@
 services:
   # Backend - FastAPI Service
   - type: web
-    name: xhs-data-backend
+    name: ig-data-backend
     env: python
     region: oregon
     plan: free
@@ -21,7 +21,7 @@ services:
 
   # Frontend - Next.js Service
   - type: web
-    name: xhs-data-frontend
+    name: ig-data-frontend
     env: node
     region: oregon
     plan: free
@@ -32,4 +32,4 @@ services:
       - key: NODE_VERSION
         value: 20
       - key: NEXT_PUBLIC_API_BASE_URL
-        value: https://xhs-data-backend.onrender.com
+        value: https://ig-data-backend.onrender.com

@@ -36,7 +36,7 @@ Your application consists of two services:
 
 After the services are created, you need to add your secret environment variables:
 
-#### For Backend Service (`xhs-data-backend`):
+#### For Backend Service (`ig-data-backend`):
 
 1. Go to your backend service in Render dashboard
 2. Click **"Environment"** in the left sidebar
@@ -54,17 +54,17 @@ After the services are created, you need to add your secret environment variable
 
 Once both services are deployed:
 
-1. **Backend URL**: `https://xhs-data-backend.onrender.com`
-   - Test: Visit `https://xhs-data-backend.onrender.com/api/health`
+1. **Backend URL**: `https://ig-data-backend.onrender.com`
+   - Test: Visit `https://ig-data-backend.onrender.com/api/health`
    - You should see a health check response
 
-2. **Frontend URL**: `https://xhs-data-frontend.onrender.com`
+2. **Frontend URL**: `https://ig-data-frontend.onrender.com`
    - This is your public application URL
    - Share this with users!
 
 ### Step 5: Update Frontend Environment Variable (if needed)
 
-If your backend URL is different from `xhs-data-backend.onrender.com`:
+If your backend URL is different from `ig-data-backend.onrender.com`:
 
 1. Go to your frontend service
 2. Click **"Environment"**
@@ -80,7 +80,7 @@ If you prefer not to use Blueprint:
 1. Click **"New +"** → **"Web Service"**
 2. Connect to your GitHub repo
 3. Configure:
-   - **Name**: `xhs-data-backend`
+   - **Name**: `ig-data-backend`
    - **Root Directory**: `backend`
    - **Environment**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
@@ -94,14 +94,14 @@ If you prefer not to use Blueprint:
 1. Click **"New +"** → **"Web Service"**
 2. Connect to your GitHub repo
 3. Configure:
-   - **Name**: `xhs-data-frontend`
+   - **Name**: `ig-data-frontend`
    - **Root Directory**: `frontend`
    - **Environment**: `Node`
    - **Build Command**: `corepack enable && pnpm install && pnpm build`
    - **Start Command**: `pnpm start`
    - **Plan**: Free
 4. Add environment variable:
-   - **NEXT_PUBLIC_API_BASE_URL**: `https://xhs-data-backend.onrender.com`
+   - **NEXT_PUBLIC_API_BASE_URL**: `https://ig-data-backend.onrender.com`
 5. Click **"Create Web Service"**
 
 ## Important Notes
