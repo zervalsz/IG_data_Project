@@ -10,7 +10,7 @@ services:
     startCommand: "uvicorn api.server:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11
+        value: 3.11.0
       - key: MONGO_URI
         sync: false  # You'll add this manually in Render dashboard
       - key: OPENAI_API_KEY
@@ -30,6 +30,6 @@ services:
     startCommand: "pnpm start"
     envVars:
       - key: NODE_VERSION
-        value: 20
+        value: 20.11.0
       - key: NEXT_PUBLIC_API_BASE_URL
         value: https://ig-data-backend.onrender.com
