@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
+// Increase timeout for content generation
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -15,6 +19,8 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
+      // Set a longer timeout (60 seconds)
+      signal: AbortSignal.timeout(60000),
     });
     
     if (!response.ok) {
