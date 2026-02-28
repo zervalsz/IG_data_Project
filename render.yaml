@@ -6,7 +6,7 @@ services:
     region: oregon
     plan: free
     rootDir: backend
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: "pip install -r requirements-deploy.txt"
     startCommand: "uvicorn api.server:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: PYTHON_VERSION
@@ -16,7 +16,7 @@ services:
       - key: OPENAI_API_KEY
         sync: false  # You'll add this manually in Render dashboard
       - key: DATABASE_NAME
-        value: tikhub_xhs
+        value: ig_raw
     healthCheckPath: /api/health
 
   # Frontend - Next.js Service
