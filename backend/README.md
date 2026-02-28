@@ -299,5 +299,5 @@ API Response (FastAPI routers)
 ## 📚 Related Documentation
 
 - **Collectors:** See `../collectors/instagram/README.md` for data collection pipeline
-- **Frontend:** See `../xhs-analyser-frontend/README.md` for UI setup
+- **Frontend:** See `../frontend/README.md` for UI setup
 - **Deployment:** See `DEPLOYMENT.md` for detailed cloud deployment guides (deprecated - content merged here)

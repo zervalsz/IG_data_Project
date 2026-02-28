@@ -391,6 +391,6 @@ These high-profile accounts demonstrate the platform's capability to analyze and
 ## �🎯 Next Steps
 
 1. **Start Backend:** `cd ../../backend && uvicorn api.server:app --host 0.0.0.0 --port 5000 --reload`
-2. **Start Frontend:** `cd ../../xhs-analyser-frontend && pnpm dev`
+2. **Start Frontend:** `cd ../../frontend && pnpm dev`
 3. **Access UI:** http://localhost:3000
 

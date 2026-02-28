@@ -68,7 +68,7 @@ A full-stack application for analyzing Instagram creators and generating AI-powe
 │   ├── generators/         # Embedding & network generators
 │   └── processors/         # Data processing pipelines
 │
-├── xhs-analyser-frontend/  # Next.js 16 frontend (React/TypeScript)
+├── frontend/               # Next.js 16 frontend (React/TypeScript)
 │   ├── app/                # App router pages
 │   │   ├── page.tsx                     # Landing page (NEW)
 │   │   ├── style-generator/page.tsx     # Style-based generator (NEW)
@@ -138,7 +138,7 @@ A full-stack application for analyzing Instagram creators and generating AI-powe
 
 1. **Install dependencies**
    ```bash
-   cd xhs-analyser-frontend
+   cd frontend
    pnpm install
    ```
 
@@ -323,7 +323,7 @@ The app automatically detects Codespaces and adjusts URLs:
 OPENAI_API_KEY=sk-proj-...
 ```
 
-**Frontend** (`xhs-analyser-frontend/.env`):
+**Frontend** (`frontend/.env`):
 ```bash
 NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
 ```

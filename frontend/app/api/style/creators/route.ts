@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+
 /**
  * GET /api/style/creators
  * Proxy to backend API to get Instagram creators list
@@ -9,8 +11,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const platform = searchParams.get('platform') || 'instagram'
     
-    // Backend is always accessible from the server via localhost
-    const backendUrl = `http://localhost:5000/api/creators/list?platform=${platform}`
+    // Backend is accessible via environment variable or localhost
+    const backendUrl = `${API_BASE_URL}/api/creators/list?platform=${platform}`
     console.log('[api/style/creators] Proxying to:', backendUrl)
     
     const response = await fetch(backendUrl)

@@ -32,7 +32,7 @@ if lsof -ti:3000 > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Frontend already running${NC}"
 else
     echo -e "${YELLOW}○ Starting frontend server...${NC}"
-    cd xhs-analyser-frontend
+    cd frontend
     pnpm dev > /tmp/frontend.log 2>&1 &
     sleep 5
     if lsof -ti:3000 > /dev/null 2>&1; then

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -9,8 +11,8 @@ export async function GET(
     
     console.log('[Proxy] Fetching creator profile for:', creatorId);
     
-    // Backend is always accessible from the server via localhost
-    const backendUrl = `http://localhost:5000/api/creators/${creatorId}?platform=instagram`;
+    // Backend is accessible via environment variable or localhost
+    const backendUrl = `${API_BASE_URL}/api/creators/${creatorId}?platform=instagram`;
     console.log('[Proxy] Backend URL:', backendUrl);
     
     const response = await fetch(backendUrl);

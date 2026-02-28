@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    // Backend is always accessible from the server via localhost
-    const backendUrl = 'http://localhost:5000/api/trend/generate';
+    // Backend is accessible via environment variable or localhost
+    const backendUrl = `${API_BASE_URL}/api/trend/generate`;
     
     const response = await fetch(backendUrl, {
       method: 'POST',

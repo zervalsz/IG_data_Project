@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getApiBaseUrl } from "@/lib/config";
 
 interface Creator {
   name: string;
@@ -27,11 +28,7 @@ export function StyleChatbot() {
   useEffect(() => {
     const loadCreators = async () => {
       try {
-        // Construct backend URL for GitHub Codespaces
-        let API_URL = 'http://localhost:5000';
-        if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
-          API_URL = window.location.origin.replace('-3000.', '-5000.');
-        }
+        const API_URL = getApiBaseUrl();
         console.log('[StyleChatbot] API URL:', API_URL);
         // Fetch Instagram creators only
         const response = await fetch(`${API_URL}/api/style/creators?platform=instagram`);
@@ -67,11 +64,7 @@ export function StyleChatbot() {
     setGeneratedContent("");
 
     try {
-      // Construct backend URL for GitHub Codespaces
-      let API_URL = 'http://localhost:5000';
-      if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
-        API_URL = window.location.origin.replace('-3000.', '-5000.');
-      }
+      const API_URL = getApiBaseUrl();
       const response = await fetch(`${API_URL}/api/style/generate`, {
         method: 'POST',
         headers: {

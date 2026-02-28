@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+
 export async function GET(request: Request) {
   try {
-    // Backend is always accessible from the server via localhost
-    const backendUrl = 'http://localhost:5000/api/creators/list?platform=instagram';
+    // Backend is accessible via environment variable or localhost
+    const backendUrl = `${API_BASE_URL}/api/creators/list?platform=instagram`;
     
     const response = await fetch(backendUrl);
     

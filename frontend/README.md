@@ -32,7 +32,7 @@ Modern, responsive frontend for the Instagram Creator Intelligence platform feat
 
 ```bash
 # 1. Navigate to frontend folder
-cd xhs-analyser-frontend
+cd frontend
 
 # 2. Install dependencies
 pnpm install
@@ -54,7 +54,7 @@ pnpm dev
 ## 📁 Project Structure
 
 ```
-xhs-analyser-frontend/
+frontend/
 ├── app/
 │   ├── [locale]/                # i18n routes
 │   │   ├── page.tsx             # Home page

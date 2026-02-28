@@ -1,0 +1,35 @@
+services:
+  # Backend - FastAPI Service
+  - type: web
+    name: xhs-data-backend
+    env: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn api.server:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: MONGO_URI
+        sync: false  # You'll add this manually in Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false  # You'll add this manually in Render dashboard
+      - key: DATABASE_NAME
+        value: tikhub_xhs
+    healthCheckPath: /api/health
+
+  # Frontend - Next.js Service
+  - type: web
+    name: xhs-data-frontend
+    env: node
+    region: oregon
+    plan: free
+    rootDir: frontend
+    buildCommand: "corepack enable && pnpm install && pnpm build"
+    startCommand: "pnpm start"
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NEXT_PUBLIC_API_BASE_URL
+        value: https://xhs-data-backend.onrender.com
